@@ -38,4 +38,35 @@ fi
 
 append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
 
+arch="$(uname -m)"
+
+if [ "$arch" = "arm64" ]; then
+  HOMEBREW_PREFIX="/opt/homebrew"
+else
+  HOMEBREW_PREFIX="/usr/local"
+fi
+
+update_shell() {
+  local shell_path;
+  shell_path="$(command -v zsh)"
+
+  fancy_echo "Changing your shell to zsh ..."
+  if ! grep "$shell_path" /etc/shells > /dev/null 2>&1 ; then
+    fancy_echo "Adding '$shell_path' to /etc/shells"
+    sudo sh -c "echo $shell_path >> /etc/shells"
+  fi
+  sudo chsh -s "$shell_path" "$USER"
+}
+
+case "$SHELL" in
+  */zsh)
+    if [ "$(command -v zsh)" != "$HOMEBREW_PREFIX/bin/zsh" ] ; then
+      update_shell
+    fi
+    ;;
+  *)
+    update_shell
+    ;;
+esac
+
 # ft=shell
