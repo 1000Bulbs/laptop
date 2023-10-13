@@ -123,4 +123,12 @@ brew "yarn"
 brew "zlib"
 EOF
 
+fancy_echo "Installing asdf version manager ..."
+if [ ! -d "$HOME/.asdf" ]; then
+  brew install asdf
+  append_to_zshrc "source $(brew --prefix asdf)/libexec/asdf.sh" 1
+fi
+
+. "$(brew --prefix asdf)/libexec/asdf.sh"
+
 # ft=shell
