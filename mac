@@ -170,4 +170,9 @@ gem_install_or_update() {
   fi
 }
 
+add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
+
+fancy_echo "Installing latest Node ..."
+install_asdf_language "nodejs"
+
 # ft=shell
