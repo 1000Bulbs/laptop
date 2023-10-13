@@ -1,0 +1,37 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: 1
+
+jobs:
+  osx:
+    name: 'macOS ${{ matrix.os }}'
+    runs-on: 'macos-${{ matrix.os }}'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - '12'
+          - '13'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: brew install shellcheck
+
+      - name: Lint
+        run: shellcheck mac
+
+      - name: Uninstall homebrew
+        run: |
+          NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+
+      - name: Test
+        run: sh mac
