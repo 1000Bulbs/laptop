@@ -69,4 +69,11 @@ case "$SHELL" in
     ;;
 esac
 
+if [ "$arch" = "arm64" ]; then
+  fancy_echo "Installing Rosetta ..."
+  if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto > /dev/null 2>&1; then
+    softwareupdate --install-rosetta --agree-to-license
+  fi
+fi
+
 # ft=shell
