@@ -76,4 +76,21 @@ if [ "$arch" = "arm64" ]; then
   fi
 fi
 
+if ! command -v brew >/dev/null; then
+  fancy_echo "Installing Homebrew ..."
+  /bin/bash -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
+
+  export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+fi
+
+if brew list | grep -Fq brew-cask; then
+  fancy_echo "Uninstalling old Homebrew-Cask ..."
+  brew uninstall --force brew-cask
+fi
+
+brew analytics off
+
 # ft=shell
