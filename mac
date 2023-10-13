@@ -93,4 +93,34 @@ fi
 
 brew analytics off
 
+brew bundle --no-lock --file=- <<EOF
+tap "homebrew/services"
+
+# Unix
+brew "git"
+brew "openssl"
+brew "rcm"
+brew "reattach-to-user-namespace"
+brew "the_silver_searcher"
+brew "tmux"
+brew "wget"
+brew "zsh"
+
+# GitHub
+brew "gh"
+
+# Image manipulation
+brew "imagemagick"
+
+# PDF Rendering
+cask "wkhtmltopdf"
+
+# Programming language prerequisites and package managers
+brew "coreutils"
+brew "libyaml" # should come after openssl
+brew "readline"
+brew "yarn"
+brew "zlib"
+EOF
+
 # ft=shell
