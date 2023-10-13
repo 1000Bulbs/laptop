@@ -131,6 +131,10 @@ if [ ! -e "$symlink" ] && [ ! -L "$symlink" ]; then
   ln -s "$HOMEBREW_PREFIX/opt/mysql-client@5.7" "$symlink"
 fi
 
+fancy_echo "Installing postgresql libraries ..."
+brew install libpq
+brew link --force libpq
+
 fancy_echo "Installing asdf version manager ..."
 if [ ! -d "$HOME/.asdf" ]; then
   brew install asdf
