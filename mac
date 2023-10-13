@@ -187,4 +187,11 @@ add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 fancy_echo "Installing latest Node ..."
 install_asdf_language "nodejs"
 
+if [ -f "$HOME/.laptop.local" ]; then
+  fancy_echo "Running your customizations from ~/.laptop.local ..."
+  . "$HOME/.laptop.local"
+fi
+
+fancy_echo "Your laptop setup is complete!"
+
 # ft=shell
