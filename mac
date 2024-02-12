@@ -127,6 +127,14 @@ brew "zlib"
 # Databases
 brew "mysql-client@5.7", link: true
 brew "libpq", link: true
+
+# Mac apps
+cask "1password"
+cask "docker"
+cask "google-chrome"
+cask "iterm2"
+cask "rectangle"
+cask "slack"
 EOF
 
 if [ ! -d "$HOME/.asdf" ]; then
