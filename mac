@@ -129,17 +129,15 @@ brew "mysql-client@5.7", link: true
 brew "libpq", link: true
 EOF
 
-fancy_echo "Installing asdf version manager ..."
 if [ ! -d "$HOME/.asdf" ]; then
+  fancy_echo "Installing asdf version manager ..."
   brew install asdf
-  append_to_zshrc "source $(brew --prefix asdf)/libexec/asdf.sh" 1
+  append_to_zshrc "source $(brew --prefix asdf)/libexec/asdf.sh"
 fi
 
 if [ ! -f "$HOME/.asdfrc" ]; then
   echo "legacy_version_file = yes" >"$HOME/.asdfrc"
 fi
-
-. "$(brew --prefix asdf)/libexec/asdf.sh"
 
 alias install_asdf_plugin=add_or_update_asdf_plugin
 add_or_update_asdf_plugin() {
@@ -153,24 +151,16 @@ add_or_update_asdf_plugin() {
   fi
 }
 
-add_or_update_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
-
 install_asdf_language() {
   local language="$1"
   local version
-  version="$(asdf list-all "$language" | grep -v "[a-z]" | tail -1)"
+  version="$(asdf latest "$language")"
 
   if ! asdf list "$language" | grep -Fq "$version"; then
     asdf install "$language" "$version"
     asdf global "$language" "$version"
   fi
 }
-
-fancy_echo "Installing latest Ruby ..."
-install_asdf_language "ruby"
-gem update --system
-number_of_cores=$(sysctl -n hw.ncpu)
-bundle config --global jobs $((number_of_cores - 1))
 
 gem_install_or_update() {
   if gem list "$1" --installed >/dev/null; then
@@ -180,9 +170,18 @@ gem_install_or_update() {
   fi
 }
 
-add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
+# shellcheck disable=SC1091
+. "$(brew --prefix asdf)/libexec/asdf.sh"
+
+fancy_echo "Installing latest Ruby ..."
+add_or_update_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
+install_asdf_language "ruby"
+gem update --system
+number_of_cores=$(sysctl -n hw.ncpu)
+bundle config --global jobs $((number_of_cores - 1))
 
 fancy_echo "Installing latest Node ..."
+add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
 
 if [ -f "$HOME/.laptop.local" ]; then
