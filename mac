@@ -123,19 +123,11 @@ brew "libyaml" # should come after openssl
 brew "readline"
 brew "yarn"
 brew "zlib"
+
+# Databases
+brew "mysql-client@5.7", link: true
+brew "libpq", link: true
 EOF
-
-fancy_echo "Installing mysql libraries ..."
-brew install mysql-client@5.7
-brew link --force mysql-client@5.7
-symlink="$HOMEBREW_PREFIX/opt/mysql"
-if [ ! -e "$symlink" ] && [ ! -L "$symlink" ]; then
-  ln -s "$HOMEBREW_PREFIX/opt/mysql-client@5.7" "$symlink"
-fi
-
-fancy_echo "Installing postgresql libraries ..."
-brew install libpq
-brew link --force libpq
 
 fancy_echo "Installing asdf version manager ..."
 if [ ! -d "$HOME/.asdf" ]; then
