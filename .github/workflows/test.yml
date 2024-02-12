@@ -9,15 +9,15 @@ env:
 
 jobs:
   osx:
-    name: 'macOS ${{ matrix.os }}'
-    runs-on: 'macos-${{ matrix.os }}'
+    name: "macOS ${{ matrix.os }}"
+    runs-on: "macos-${{ matrix.os }}"
 
     strategy:
       fail-fast: false
       matrix:
         os:
-          - '12'
-          - '13'
+          - "12"
+          - "13"
 
     steps:
       - name: Checkout code
@@ -32,6 +32,16 @@ jobs:
       - name: Uninstall homebrew
         run: |
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+
+      - name: Uninstall apps
+        run: |
+          rm -Rf \
+            "/Applications/1Password.app" \
+            "/Applications/Docker.app" \
+            "/Applications/Google Chrome.app" \
+            "/Applications/iTerm.app" \
+            "/Applications/Rectangle.app" \
+            "/Applications/Slack.app"
 
       - name: Test
         run: sh mac
