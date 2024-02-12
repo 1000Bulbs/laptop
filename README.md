@@ -9,8 +9,8 @@ upgrades packages based on what is already installed.
 
 ## Requirements
 
-* macOS Ventura (13.x) on Apple Silicon and Intel
-* macOS Monterey (12.x) on Apple Silicon and Intel
+- macOS Sonoma (14.x) on Apple Silicon and Intel
+- macOS Ventura (13.x) on Apple Silicon and Intel
 
 ## Install
 
@@ -43,18 +43,18 @@ as an attachment.
 
 macOS tools:
 
-* [Homebrew] for managing operating system libraries.
+- [Homebrew] for managing operating system libraries.
 
 [Homebrew]: http://brew.sh/
 
 Unix tools:
 
-* [Git] for version control
-* [OpenSSL] for Transport Layer Security (TLS)
-* [RCM] for managing company and personal dotfiles
-* [The Silver Searcher] for finding things in files
-* [Tmux] for saving project state and switching between projects
-* [Zsh] as your shell
+- [Git] for version control
+- [OpenSSL] for Transport Layer Security (TLS)
+- [RCM] for managing company and personal dotfiles
+- [The Silver Searcher] for finding things in files
+- [Tmux] for saving project state and switching between projects
+- [Zsh] as your shell
 
 [Git]: https://git-scm.com/
 [OpenSSL]: https://www.openssl.org/
@@ -65,22 +65,22 @@ Unix tools:
 
 GitHub tools:
 
-* [GitHub CLI] for interacting with the GitHub API
+- [GitHub CLI] for interacting with the GitHub API
 
 [GitHub CLI]: https://cli.github.com/
 
 Image tools:
 
-* [ImageMagick] for cropping and resizing images
+- [ImageMagick] for cropping and resizing images
 
 Programming languages, package managers, and configuration:
 
-* [asdf-vm] for managing programming language versions
-* [Bundler] for managing Ruby libraries
-* [Node.js] and [npm], for running apps and installing JavaScript packages
-* [Ruby] stable for writing general-purpose code
-* [Yarn] for managing JavaScript packages
-* [Rosetta 2] for running tools that are not supported in Apple silicon processors
+- [asdf-vm] for managing programming language versions
+- [Bundler] for managing Ruby libraries
+- [Node.js] and [npm], for running apps and installing JavaScript packages
+- [Ruby] stable for writing general-purpose code
+- [Yarn] for managing JavaScript packages
+- [Rosetta 2] for running tools that are not supported in Apple silicon processors
 
 [Bundler]: https://bundler.io/
 [ImageMagick]: https://www.imagemagick.org/
@@ -93,8 +93,8 @@ Programming languages, package managers, and configuration:
 
 Databases:
 
-* [Postgres] for postgres libraries
-* [MySQL] for mysql libraries
+- [Postgres] for postgres libraries
+- [MySQL] for mysql libraries
 
 [Postgres]: https://www.postgresql.org/
 [MySQL]: https://www.mysql.com

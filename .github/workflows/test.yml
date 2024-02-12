@@ -16,8 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - "12"
           - "13"
+          - "14"
 
     steps:
       - name: Checkout code
