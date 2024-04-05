@@ -192,6 +192,11 @@ gem update --system
 number_of_cores=$(sysctl -n hw.ncpu)
 bundle config --global jobs $((number_of_cores - 1))
 
+append_to_zshrc '# Fix for installing older versions of Ruby'
+append_to_zshrc 'export DLDFLAGS="-Wl,-undefined,dynamic_lookup"' 1
+append_to_zshrc 'export OPENSSL_CFLAGS="-Wno-error=implicit-function-declaration"' 1
+append_to_zshrc 'export CFLAGS=-Wno-error="implicit-function-declaration"' 1
+
 fancy_echo "Installing latest Node ..."
 add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
