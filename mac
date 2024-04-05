@@ -127,15 +127,19 @@ brew "zlib"
 # Databases
 brew "mysql-client@5.7", link: true
 brew "libpq", link: true
+EOF
 
 # Mac apps
-cask "1password"
-cask "docker"
-cask "google-chrome"
-cask "iterm2"
-cask "rectangle"
-cask "slack"
-EOF
+apps=(1password docker google-chrome iterm2 rectangle slack)
+app_paths=(1Password.app Docker.app "Google Chrome.app" iTerm.app Rectangle.app Slack.app)
+
+for i in "${!apps[@]}"; do
+  fancy_echo "Installing ${apps[$i]} ..."
+  if [ ! -d "/Applications/${app_paths[$i]}" ]; then
+    brew install --cask "${apps[$i]}"
+  fi
+  echo "${apps[$i]} installed."
+done
 
 if [ ! -d "$HOME/.asdf" ]; then
   fancy_echo "Installing asdf version manager ..."
