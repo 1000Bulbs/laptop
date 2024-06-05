@@ -16,7 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - "13"
           - "14"
 
     steps:
