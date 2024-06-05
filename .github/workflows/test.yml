@@ -1,6 +1,6 @@
 name: test
 
-on:
+'on':
   push:
   pull_request:
 
@@ -16,7 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - "13"
           - "14"
 
     steps:
