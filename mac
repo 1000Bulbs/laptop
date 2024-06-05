@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # ft=shell
 
 fancy_echo() {
@@ -130,16 +130,38 @@ brew "libpq", link: true
 EOF
 
 # Mac apps
-apps=(1password docker google-chrome iterm2 rectangle slack)
-app_paths=(1Password.app Docker.app "Google Chrome.app" iTerm.app Rectangle.app Slack.app)
+# This will first check if a user has either manually installed the app
+# or if homebrew has already installed the app so it doesn't get an error.
 
-for i in "${!apps[@]}"; do
-  fancy_echo "Installing ${apps[$i]} ..."
-  if [ ! -d "/Applications/${app_paths[$i]}" ]; then
-    brew install --cask "${apps[$i]}"
-  fi
-  echo "${apps[$i]} installed."
-done
+# 1password
+if [ ! -d "/Applications/1Password.app" ]; then
+  brew install --cask 1password
+fi
+
+# docker
+if [ ! -d "/Applications/Docker.app" ]; then
+  brew install --cask docker
+fi
+
+# google chrome
+if [ ! -d "/Applications/Google Chrome.app" ]; then
+  brew install --cask google-chrome
+fi
+
+# iterm2
+if [ ! -d "/Applications/iTerm.app" ]; then
+  brew install --cask iterm2
+fi
+
+# rectangle
+if [ ! -d "/Applications/Rectangle.app" ]; then
+  brew install --cask rectangle
+fi
+
+# slack
+if [ ! -d "/Applications/Slack.app" ]; then
+  brew install --cask slack
+fi
 
 if [ ! -d "$HOME/.asdf" ]; then
   fancy_echo "Installing asdf version manager ..."
