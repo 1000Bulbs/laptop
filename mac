@@ -125,8 +125,10 @@ brew "yarn"
 brew "zlib"
 
 # Databases
-brew "mysql-client@5.7", link: true
 brew "libpq", link: true
+# mysql-client@5.7 is now expired in homebrew
+# so we will have to install it manually
+# brew "mysql-client@5.7", link: true
 EOF
 
 # Mac apps
