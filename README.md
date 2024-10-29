@@ -53,6 +53,20 @@ Remove the line that begins with
 disable! date:
 ```
 
+Edit `openssl@1.1` install 
+
+`openssl@1.1` is now unsupported, so we need to edit its installation file
+
+```
+brew edit openssl@1.1
+```
+
+Remove the following line
+
+```
+disable! date: "2024-10-24", because: :unsupported
+```
+ 
 Install `mysql-client@5.7`
 
 ```
