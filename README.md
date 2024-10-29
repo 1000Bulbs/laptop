@@ -53,7 +53,7 @@ Remove the line that begins with
 disable! date:
 ```
 
-Edit `openssl@1.1` install 
+Edit `openssl@1.1` formmula
 
 `openssl@1.1` is now unsupported, so we need to edit its installation file
 
