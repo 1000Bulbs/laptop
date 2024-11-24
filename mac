@@ -131,6 +131,40 @@ brew "libpq", link: true
 # brew "mysql-client@5.7", link: true
 EOF
 
+# Hack Unsupported Taps
+# We still rely on a few brew packages that are now unsupported, and
+# need to hack their formulae to work.
+
+fancy_echo "Hacking unsupported brew Taps"
+
+brew tap homebrew/core --force
+
+function hack_unsupported_tap_failed() {
+  echo "WARNING: unable to correct $1 formula"
+  echo "Please use 'brew edit $1' to correct the formula"
+  echo "(remove the 'disable! date:' line)"
+  exit 1
+}
+
+function hack_unsupported_tap() {
+  # in the following command we might encounter .bak files that were not removed properly
+  # so we ensure the actual Formula file is the one we select
+  local formula=$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)
+
+  if [ -f "$formula" ]; then
+    sed -i '' '/disable! date:/d' "$formula"
+    [[ $? -eq 0 ]] && echo "√ $1" || hack_unsupported_tap_failed "$1"
+  else
+    hack_unsupported_tap_failed "$1"
+  fi
+}
+
+hack_unsupported_tap openssl@1.1
+hack_unsupported_tap mysql-client@5.7
+
+unset -f hack_unsupported_tap
+unset -f hack_unsupported_tap_failed
+
 # Mac apps
 # This will first check if a user has either manually installed the app
 # or if homebrew has already installed the app so it doesn't get an error.
