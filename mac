@@ -165,6 +165,10 @@ hack_unsupported_tap mysql-client@5.7
 unset -f hack_unsupported_tap
 unset -f hack_unsupported_tap_failed
 
+# Install mysql-client@5.7
+HOMEBREW_NO_INSTALL_FROM_API=1 brew install mysql-client@5.7
+brew link --force mysql-client@5.7
+
 # Mac apps
 # This will first check if a user has either manually installed the app
 # or if homebrew has already installed the app so it doesn't get an error.

@@ -31,54 +31,6 @@ Optionally, review the log:
 less ~/laptop.log
 ```
 
-## MySQL 5.7 Hack
-
-`mysql-client@5.7` is now expired in homebrew, so we will need to install it manually.
-
-Tap homebrew-core
-
-```
-brew tap homebrew/core --force
-```
-
-Edit the `mysql-client@5.7` formula
-
-```
-brew edit mysql-client@5.7
-```
-
-Remove the line that begins with
-
-```
-disable! date:
-```
-
-Edit `openssl@1.1` formmula
-
-`openssl@1.1` is now unsupported, so we need to edit its installation file
-
-```
-brew edit openssl@1.1
-```
-
-Remove the following line
-
-```
-disable! date: "2024-10-24", because: :unsupported
-```
- 
-Install `mysql-client@5.7`
-
-```
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install mysql-client@5.7
-```
-
-Link mysql binaries
-
-```
-brew link --force mysql-client@5.7
-```
-
 ## Debugging
 
 Your last laptop run will be saved to `~/laptop.log`. Read through it and see if
