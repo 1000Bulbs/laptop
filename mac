@@ -149,10 +149,15 @@ hack_unsupported_tap_failed() {
 hack_unsupported_tap() {
   # in the following command we might encounter .bak files that were not removed properly
   # so we ensure the actual Formula file is the one we select
-  local "formula"=$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)
+  local formula="$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)"
 
   if [ ! -f "$formula" ]; then
-    sed -i '' '/disable! date:/d' "$formula" && echo "√ $1" || hack_unsupported_tap_failed "$1" 
+    sed -i '' '/disable! date:/d' "$formula" 
+    if [ $? -ne 0 ]; then
+      hack_unsupported_tap_failed "$1" 
+    else
+      echo "√ $1" || 
+    fi
   else
     hack_unsupported_tap_failed "$1"
   fi
