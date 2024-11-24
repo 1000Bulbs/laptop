@@ -153,7 +153,11 @@ function hack_unsupported_tap() {
 
   if [ -f "$formula" ]; then
     sed -i '' '/disable! date:/d' "$formula"
-    [[ $? -eq 0 ]] && echo "√ $1" || hack_unsupported_tap_failed "$1"
+    if [ $? -eq 0 ]; then 
+      echo "√ $1" 
+    else
+      hack_unsupported_tap_failed "$1" 
+    fi
   else
     hack_unsupported_tap_failed "$1"
   fi
