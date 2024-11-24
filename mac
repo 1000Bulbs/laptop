@@ -123,6 +123,7 @@ brew "libyaml" # should come after openssl
 brew "readline"
 brew "yarn"
 brew "zlib"
+brew "jq"
 
 # Databases
 brew "libpq", link: true
