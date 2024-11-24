@@ -139,25 +139,20 @@ fancy_echo "Hacking unsupported brew Taps"
 
 brew tap homebrew/core --force
 
-function hack_unsupported_tap_failed() {
+hack_unsupported_tap_failed() {
   echo "WARNING: unable to correct $1 formula"
   echo "Please use 'brew edit $1' to correct the formula"
   echo "(remove the 'disable! date:' line)"
   exit 1
 }
 
-function hack_unsupported_tap() {
+hack_unsupported_tap() {
   # in the following command we might encounter .bak files that were not removed properly
   # so we ensure the actual Formula file is the one we select
   local formula=$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)
 
-  if [ -f "$formula" ]; then
-    sed -i '' '/disable! date:/d' "$formula"
-    if [ $? -eq 0 ]; then 
-      echo "√ $1" 
-    else
-      hack_unsupported_tap_failed "$1" 
-    fi
+  if [ ! -f "$formula" ]
+    sed -i '' '/disable! date:/d' "$formula" && echo "√ $1" || hack_unsupported_tap_failed "$1" 
   else
     hack_unsupported_tap_failed "$1"
   fi
