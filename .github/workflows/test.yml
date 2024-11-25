@@ -17,6 +17,7 @@ jobs:
       matrix:
         os:
           - "14"
+          - "15"
 
     steps:
       - name: Checkout code
