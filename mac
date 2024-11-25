@@ -135,7 +135,7 @@ EOF
 # We still rely on a few brew packages that are now unsupported, and
 # need to hack their formulae to work.
 
-fancy_echo "Hacking unsupported brew Taps"
+fancy_echo "Hacking unsupported brew Taps "
 
 brew tap homebrew/core --force
 
