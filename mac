@@ -114,9 +114,6 @@ brew "gh"
 # Image manipulation
 brew "imagemagick"
 
-# PDF Rendering
-cask "wkhtmltopdf"
-
 # Programming language prerequisites and package managers
 brew "coreutils"
 brew "libyaml" # should come after openssl
@@ -138,7 +135,8 @@ EOF
 
 fancy_echo "Hacking unsupported brew Taps "
 
-brew tap homebrew/core --force
+brew tap homebrew/cask --force # Needed for wkhtmltopdf
+brew tap homebrew/core --force # Needed for mysql-client@5.7 and openssl@1.1
 
 hack_unsupported_tap_failed() {
   echo "WARNING: unable to correct $1 formula"
@@ -150,14 +148,14 @@ hack_unsupported_tap_failed() {
 hack_unsupported_tap() {
   # in the following command we might encounter .bak files that were not removed properly
   # so we ensure the actual Formula file is the one we select
-  local formula ; formula="$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)"
+  local formula
+  formula="$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)"
 
   if [ -f "$formula" ]; then
-    if sed -i '' '/disable! date:/d' "$formula" 
-    then
+    if sed -i '' '/disable! date:/d' "$formula"; then
       echo "√ $1"
     else
-      hack_unsupported_tap_failed "$1" 
+      hack_unsupported_tap_failed "$1"
     fi
   else
     hack_unsupported_tap_failed "$1"
@@ -166,13 +164,17 @@ hack_unsupported_tap() {
 
 hack_unsupported_tap openssl@1.1
 hack_unsupported_tap mysql-client@5.7
+hack_unsupported_tap wkhtmltopdf
 
 unset -f hack_unsupported_tap
 unset -f hack_unsupported_tap_failed
 
-# Install mysql-client@5.7
+fancy_echo "Installing mysql-client@5.7 ..."
 HOMEBREW_NO_INSTALL_FROM_API=1 brew install mysql-client@5.7
 brew link --force mysql-client@5.7
+
+fancy_echo "Installing wkhtmltopdf ..."
+HOMEBREW_NO_INSTALL_FROM_API=1 brew install wkhtmltopdf
 
 # Mac apps
 # This will first check if a user has either manually installed the app
