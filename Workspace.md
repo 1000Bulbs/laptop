@@ -23,7 +23,7 @@ This is maintained in 1Password under `strangler master key` and MUST be stored 
 
 ## Using `@<command>` in place of `./bin/<command>`
 
-Rails projects use the `./bin` directory to house definitions of all the various Rails commands, so they run in the context of the application. And example would be:
+Rails projects use the `./bin` directory to house definitions of all the various Rails commands, so they run in the context of the application. An example would be:
 
 ```bash
 ./bin/rake db:migrate
