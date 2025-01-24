@@ -1,0 +1,5 @@
+# load all aliases contained in "*.aliases" files in this directory
+# and all its subdirectories
+for file in $(dirname $0 | xargs -I % find % -name "*.aliases"); do
+  source $file
+done

@@ -1,0 +1,99 @@
+# only load these if `git` is installed
+command -v git > /dev/null ; [[ ! $? -eq 0 ]] && return
+
+# remember the name of this alias file for later
+CMD=$(ls -l ${(%):-%N} | awk '{ print $NF }')
+
+# add to this file, and automatically source it again for immediate use
+
+# *** Git Commands
+
+alias git+="vi ${CMD} && source ${CMD}"
+alias git:auth='gh auth login --with-token < ~/.ssh/github.token'
+alias gh:auth='gh auth login --with-token < ~/.ssh/github.token'
+
+alias g,a='alias | awk '\''/git/'\'''
+
+alias g='git'
+alias gs='git status'
+
+alias 'g?'='git config --list'
+alias 'g?:url'='git config --get remote.origin.url'
+
+alias gcl='git clone'
+alias g:remote='git checkout --track'
+alias g:merged='git branch --merged'
+alias g:unmerged='git branch --no-merged'
+
+alias gf='git fetch'
+alias gfa='git fetch --all'
+
+alias gcb='git checkout -b'
+alias gco='git checkout'
+
+# this will require updating your PATH to include where this resides
+alias gco,l='git-change-branch.sh'
+
+alias ga='git add --all'
+alias gc='git commit'
+alias gc-='git commit --no-verify'
+alias gca='git add --all ; git commit --all'
+alias gcm='gca -m && gl -n 1'
+
+alias gc-='git commit --no-verify'
+alias gc+='ga . && gc- --amend'
+alias gca-='git add --all ; git commit --all --no-verify'
+alias gcm-='gca- -m'
+
+alias gcp='git cherry-pick'
+alias gcp,c='gcp --continue'
+alias gcp,a='gcp --abort'
+
+alias gst='git stash'
+alias gst,l='git stash list'
+alias gst,pop='git stash pop'
+alias gst,apply='git stash apply'
+alias gst,unstaged='git stash --keep-index -u'
+
+alias gt='git tag'
+alias gm='git merge'
+alias gms='git merge --squash'
+alias gr='git rebase'
+alias grc='git rebase --continue'
+
+alias gp='git push'
+alias g^='git push'
+alias g^^='g^ --force'
+alias gfp='g^ --force'
+alias gv='git pull'
+alias g+='git pull'
+alias g+^='g+ && g^'
+
+alias gb='git branch'
+alias gba='git branch --all'
+alias gba:u='gba | sed '"'"'s/remotes\/origin\///'"'"' | sort | uniq'
+alias gb:D='git branch -D'
+alias gb^='git push -u origin'
+alias gb^:new='git push --set-upstream origin master'
+alias gb^:D='git push origin --delete'
+
+alias gl='git log --abbrev-commit --decorate=short --format=format:"%C(yellow)%h%C(reset) %s %C(magenta)%d%C(reset)"'
+alias gl1='git log --oneline'
+alias gla='git log --pretty="format:%C(yellow)%h%Creset %C(white)[%cr]%Creset %s %C(magenta)<%an>%Creset"'
+alias glt='git log --abbrev-commit --decorate=short --format=format:"%C(yellow)%h%C(reset) %C(white)[%ar]%C(reset) %s %C(magenta)%d%C(reset)"'
+alias glc='git log --abbrev-commit --decorate=short --format=format:"%C(yellow)%h%C(reset) %C(white)[%ar]%C(reset) %s %C(dim white)<%an>%C(reset)%C(magenta)%d%C(reset)"'
+alias glg='git log --graph --decorate --pretty=oneline --abbrev-commit'
+alias gld='git log --abbrev-commit --decorate=short --format=format:"%C(yellow)%h%C(reset) %C(dim white)%ci%C(reset) %s %C(magenta)%d%C(reset)"'
+
+alias gdiff='git diff'
+alias gdiff:HEAD='git diff HEAD HEAD~1'
+alias gdiff:files='git diff --name-only'
+alias gdiff:f='git diff --name-only'
+alias gdiff:HEAD:files='git diff --name-only HEAD HEAD~1'
+alias gdiff:HEAD:f='git diff --name-only HEAD HEAD~1'
+
+alias g:tr:all='git branch -r | grep -v '"'"'\->'"'"' | while read remote; do git branch --track "${remote#origin/}" "$remote"; done'
+alias gp:all='g:tr:all && git pull --all'
+
+alias g,unstage='git restore --staged'
+alias g,un='g,unstage'

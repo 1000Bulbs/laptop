@@ -1,0 +1,20 @@
+# only load these if `brew` is installed
+command -v brew > /dev/null ; [[ ! $? -eq 0 ]] && return
+
+# remember the name of this alias file for later
+CMD=$(ls -l ${(%):-%N} | awk '{ print $NF }')
+
+# add to this file, and automatically source it again for immediate use
+alias brew+="vi ${CMD} && source ${CMD}"
+
+# *** Brew Commands
+
+alias b='brew'
+alias b:u='brew update'
+alias b:chk='brew bundle check'
+alias b:l='brew list && brew cask list'
+alias b:ls='brew list'
+alias b:cask='brew cask'
+alias b:cask:ls='brew cask list'
+alias b:bundle='brew bundle ~/.bash/Brewfile'
+alias b:dump='brew bundle dump'
