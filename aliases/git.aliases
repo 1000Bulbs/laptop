@@ -3,12 +3,13 @@ command -v git > /dev/null ; [[ ! $? -eq 0 ]] && return
 
 # remember the name of this alias file for later
 CMD=$(ls -l ${(%):-%N} | awk '{ print $NF }')
+BIN=$(readlink -f $(dirname $(dirname $CMD)))/bin/git
 
 # add to this file, and automatically source it again for immediate use
+alias git+="vi ${CMD} && source ${CMD}"
 
 # *** Git Commands
 
-alias git+="vi ${CMD} && source ${CMD}"
 alias git:auth='gh auth login --with-token < ~/.ssh/github.token'
 alias gh:auth='gh auth login --with-token < ~/.ssh/github.token'
 
@@ -32,7 +33,7 @@ alias gcb='git checkout -b'
 alias gco='git checkout'
 
 # this will require updating your PATH to include where this resides
-alias gco,l='git-change-branch.sh'
+alias gco,l="${BIN}/git-change-branch.sh"
 
 alias ga='git add --all'
 alias gc='git commit'
