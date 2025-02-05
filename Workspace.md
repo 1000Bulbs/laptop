@@ -50,3 +50,27 @@ zle -N accept-line local-rails-cmd
 ```
 
 by placing this is your `.zshrc` file it will be available everywhere on your machine.
+
+## Multiple Simultaneous Terminal Windows
+
+Install `iTerm2`
+```bash
+brew install wouterdebie/repo/i2cssh
+```
+
+Update `~/.ssh/config` to include server definitions
+```bash
+# Example: adding the 1st QA Strangler server
+Host qa-strangler-01
+  HostName <ip-address>
+  User deploy
+```
+
+```bash
+# Example: opening terminals on the 5 QA servers
+i2cssh -exec strangler-01 strangler-02 strangler-03 stragnler-04 strangler-05
+```
+
+`Command + Shift + i` toggles the ability to type on all terminals
+`Command + Shift + Enter` toggles zooming a terminal window
+

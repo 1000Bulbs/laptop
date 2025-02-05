@@ -1,7 +1,10 @@
-command -v yarn > /dev/null ; [[ ! $? -eq 0 ]] && return
+# only load these if `docker` is installed
+command -v docker > /dev/null ; [[ ! $? -eq 0 ]] && return
 
+# remember the name of this alias file for later
 CMD=$(ls -l ${(%):-%N} | awk '{ print $NF }')
 
+# add to this file, and automatically source it again for immediate use
 alias docker+="vi ${CMD} && source ${CMD}"
 
 # *** Docker Commands
