@@ -1,4 +1,4 @@
-name: test
+name: asdf
 
 "on":
   push:
@@ -28,6 +28,17 @@ jobs:
 
       - name: Lint
         run: shellcheck mac
+
+      - name: Install legacy ASDF v0.15.0
+        run: |
+          git clone --branch v0.15.0 https://github.com/asdf-vm/asdf.git ~/.asdf
+          echo '. "$HOME/.asdf/asdf.sh"' >> ~/.zshrc
+          echo '. "$HOME/.asdf/completions/asdf.bash"' >> ~/.zshrc
+          . "$HOME/.asdf/asdf.sh"
+          asdf plugin add act
+          asdf install act latest
+
+          echo "PATH=$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH" >> "$GITHUB_ENV"
 
       - name: Uninstall homebrew
         run: |
