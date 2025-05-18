@@ -10,6 +10,7 @@ upgrades packages based on what is already installed.
 ## Requirements
 
 - macOS Sonoma (14.x) on Apple Silicon and Intel
+- macOS Sequoia (15.x) on Apple Silicon and Intel
 
 ## Install
 
@@ -40,7 +41,10 @@ as an attachment.
 
 ## Docker Login
 
-1000bulbs repos make extensive use of CLI tools and scripts. Many of these require access to the Docker Hub and the images we've prepared for development. To fully setup your personal workstation to work seamlessly with Docker, see the additional instructions for logging into [Docker](./Docker/Docker.md).
+1000bulbs repos make extensive use of CLI tools and scripts. Many of these
+require access to the Docker Hub and the images we've prepared for development.
+To fully setup your personal workstation to work seamlessly with Docker, see
+the additional instructions for logging into [Docker](./Docker/Docker.md).
 
 ## What This Script Sets Up
 
