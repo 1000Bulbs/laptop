@@ -163,39 +163,12 @@ fi
 
 brew analytics off
 
-brew bundle --no-lock --file=- <<EOF
-tap "homebrew/services"
-
-# Unix
-brew "git"
-brew "openssl"
-brew "rcm"
-brew "reattach-to-user-namespace"
-brew "the_silver_searcher"
-brew "tmux"
-brew "wget"
-brew "zsh"
-
-# GitHub
-brew "gh"
-
-# Image manipulation
-brew "imagemagick"
-
-# Programming language prerequisites and package managers
-brew "coreutils"
-brew "libyaml" # should come after openssl
-brew "readline"
-brew "yarn"
-brew "zlib"
-brew "jq"
-
-# Databases
-brew "libpq", link: true
-# mysql-client@5.7 is now expired in homebrew
-# so we will have to install it manually
-# brew "mysql-client@5.7", link: true
-EOF
+if [ -f "$PWD/Brewfile" ]; then
+  print_step "Installing packages from Brewfile ..."
+  brew bundle --file="$PWD/Brewfile"
+else
+  print_warning "Brewfile not found. Skipping brew bundle install."
+fi
 
 # Hack Unsupported Taps
 # We still rely on a few brew packages that are now unsupported, and
