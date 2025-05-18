@@ -70,4 +70,4 @@ jobs:
             "/Applications/Slack.app"
 
       - name: Test
-        run: bash mac
+        run: sh mac
