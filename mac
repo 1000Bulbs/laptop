@@ -19,6 +19,8 @@ print_error() {
   echo -e "\033[1;31m✖ $1\033[0m"
 }
 
+# Functions
+# -----------------------------------------------------------------------------
 append_to_zshrc() {
   local text="$1" zshrc
   local skip_new_line="${2:-0}"
@@ -35,6 +37,72 @@ append_to_zshrc() {
     else
       printf "\\n%s\\n" "$text" >>"$zshrc"
     fi
+  fi
+}
+
+update_shell() {
+  local shell_path
+  shell_path="$(command -v zsh)"
+
+  print_step "Changing your shell to zsh ..."
+  if ! grep "$shell_path" /etc/shells >/dev/null 2>&1; then
+    print_step "Adding '$shell_path' to /etc/shells"
+    sudo sh -c "echo $shell_path >> /etc/shells"
+  fi
+  sudo chsh -s "$shell_path" "$USER"
+}
+
+hack_unsupported_tap() {
+  # in the following command we might encounter .bak files that were not removed properly
+  # so we ensure the actual Formula file is the one we select
+  local formula
+  formula="$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)"
+
+  if [ -f "$formula" ]; then
+    if sed -i '' '/disable! date:/d' "$formula"; then
+      print_success "√ $1"
+    else
+      hack_unsupported_tap_failed "$1"
+    fi
+  else
+    hack_unsupported_tap_failed "$1"
+  fi
+}
+
+hack_unsupported_tap_failed() {
+  print_error "WARNING: unable to correct $1 formula"
+  print_error "Please use 'brew edit $1' to correct the formula"
+  print_error "(remove the 'disable! date:' line)"
+  exit 1
+}
+
+install_asdf_plugin() {
+  local name="$1"
+  local url="$2"
+
+  if ! asdf plugin-list | grep -Fq "$name"; then
+    asdf plugin-add "$name" "$url"
+  else
+    asdf plugin-update "$name"
+  fi
+}
+
+install_asdf_language() {
+  local language="$1"
+  local version
+  version="$(asdf latest "$language")"
+
+  if ! asdf list "$language" | grep -Fq "$version"; then
+    asdf install "$language" "$version"
+    asdf global "$language" "$version"
+  fi
+}
+
+gem_install_or_update() {
+  if gem list "$1" --installed >/dev/null; then
+    gem update "$@"
+  else
+    gem install "$@"
   fi
 }
 
@@ -59,18 +127,6 @@ if [ "$arch" = "arm64" ]; then
 else
   HOMEBREW_PREFIX="/usr/local"
 fi
-
-update_shell() {
-  local shell_path
-  shell_path="$(command -v zsh)"
-
-  print_step "Changing your shell to zsh ..."
-  if ! grep "$shell_path" /etc/shells >/dev/null 2>&1; then
-    print_step "Adding '$shell_path' to /etc/shells"
-    sudo sh -c "echo $shell_path >> /etc/shells"
-  fi
-  sudo chsh -s "$shell_path" "$USER"
-}
 
 case "$SHELL" in
 */zsh)
@@ -146,33 +202,8 @@ EOF
 # need to hack their formulae to work.
 
 print_step "Hacking unsupported brew Taps "
-
 brew tap homebrew/cask --force # Needed for wkhtmltopdf
 brew tap homebrew/core --force # Needed for mysql-client@5.7 and openssl@1.1
-
-hack_unsupported_tap_failed() {
-  print_error "WARNING: unable to correct $1 formula"
-  print_error "Please use 'brew edit $1' to correct the formula"
-  print_error "(remove the 'disable! date:' line)"
-  exit 1
-}
-
-hack_unsupported_tap() {
-  # in the following command we might encounter .bak files that were not removed properly
-  # so we ensure the actual Formula file is the one we select
-  local formula
-  formula="$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)"
-
-  if [ -f "$formula" ]; then
-    if sed -i '' '/disable! date:/d' "$formula"; then
-      print_success "√ $1"
-    else
-      hack_unsupported_tap_failed "$1"
-    fi
-  else
-    hack_unsupported_tap_failed "$1"
-  fi
-}
 
 hack_unsupported_tap openssl@1.1
 hack_unsupported_tap mysql-client@5.7
@@ -232,42 +263,11 @@ if [ ! -f "$HOME/.asdfrc" ]; then
   echo "legacy_version_file = yes" >"$HOME/.asdfrc"
 fi
 
-alias install_asdf_plugin=add_or_update_asdf_plugin
-add_or_update_asdf_plugin() {
-  local name="$1"
-  local url="$2"
-
-  if ! asdf plugin-list | grep -Fq "$name"; then
-    asdf plugin-add "$name" "$url"
-  else
-    asdf plugin-update "$name"
-  fi
-}
-
-install_asdf_language() {
-  local language="$1"
-  local version
-  version="$(asdf latest "$language")"
-
-  if ! asdf list "$language" | grep -Fq "$version"; then
-    asdf install "$language" "$version"
-    asdf global "$language" "$version"
-  fi
-}
-
-gem_install_or_update() {
-  if gem list "$1" --installed >/dev/null; then
-    gem update "$@"
-  else
-    gem install "$@"
-  fi
-}
-
 # shellcheck disable=SC1091
 . "$(brew --prefix asdf)/libexec/asdf.sh"
 
 print_step "Installing latest Ruby ..."
-add_or_update_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
+install_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
 install_asdf_language "ruby"
 gem update --system
 number_of_cores=$(sysctl -n hw.ncpu)
@@ -279,7 +279,7 @@ append_to_zshrc 'export OPENSSL_CFLAGS="-Wno-error=implicit-function-declaration
 append_to_zshrc 'export CFLAGS=-Wno-error="implicit-function-declaration"' 1
 
 print_step "Installing latest Node ..."
-add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
+install_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
 
 if [ -f "$HOME/.laptop.local" ]; then
