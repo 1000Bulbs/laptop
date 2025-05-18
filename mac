@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 # vim: set filetype=bash tabstop=2 shiftwidth=2 expandtab :
 
-fancy_echo() {
-  local fmt="$1"
-  shift
-  printf "\\n$fmt\\n" "$@"
+# Print
+# -----------------------------------------------------------------------------
+print_step() {
+  echo -e "\n\033[1;34m==> $1\033[0m"
+}
+
+print_success() {
+  echo -e "\033[1;32m✔ $1\033[0m"
+}
+
+print_warning() {
+  echo -e "\033[1;33m⚠ $1\033[0m"
+}
+
+print_error() {
+  echo -e "\033[1;31m✖ $1\033[0m"
 }
 
 append_to_zshrc() {
@@ -52,9 +64,9 @@ update_shell() {
   local shell_path
   shell_path="$(command -v zsh)"
 
-  fancy_echo "Changing your shell to zsh ..."
+  print_step "Changing your shell to zsh ..."
   if ! grep "$shell_path" /etc/shells >/dev/null 2>&1; then
-    fancy_echo "Adding '$shell_path' to /etc/shells"
+    print_step "Adding '$shell_path' to /etc/shells"
     sudo sh -c "echo $shell_path >> /etc/shells"
   fi
   sudo chsh -s "$shell_path" "$USER"
@@ -72,14 +84,14 @@ case "$SHELL" in
 esac
 
 if [ "$arch" = "arm64" ]; then
-  fancy_echo "Installing Rosetta ..."
+  print_step "Installing Rosetta ..."
   if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
     softwareupdate --install-rosetta --agree-to-license
   fi
 fi
 
 if ! command -v brew >/dev/null; then
-  fancy_echo "Installing Homebrew ..."
+  print_step "Installing Homebrew ..."
   /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
@@ -89,7 +101,7 @@ if ! command -v brew >/dev/null; then
 fi
 
 if brew list | grep -Fq brew-cask; then
-  fancy_echo "Uninstalling old Homebrew-Cask ..."
+  print_step "Uninstalling old Homebrew-Cask ..."
   brew uninstall --force brew-cask
 fi
 
@@ -133,15 +145,15 @@ EOF
 # We still rely on a few brew packages that are now unsupported, and
 # need to hack their formulae to work.
 
-fancy_echo "Hacking unsupported brew Taps "
+print_step "Hacking unsupported brew Taps "
 
 brew tap homebrew/cask --force # Needed for wkhtmltopdf
 brew tap homebrew/core --force # Needed for mysql-client@5.7 and openssl@1.1
 
 hack_unsupported_tap_failed() {
-  echo "WARNING: unable to correct $1 formula"
-  echo "Please use 'brew edit $1' to correct the formula"
-  echo "(remove the 'disable! date:' line)"
+  print_error "WARNING: unable to correct $1 formula"
+  print_error "Please use 'brew edit $1' to correct the formula"
+  print_error "(remove the 'disable! date:' line)"
   exit 1
 }
 
@@ -153,7 +165,7 @@ hack_unsupported_tap() {
 
   if [ -f "$formula" ]; then
     if sed -i '' '/disable! date:/d' "$formula"; then
-      echo "√ $1"
+      print_success "√ $1"
     else
       hack_unsupported_tap_failed "$1"
     fi
@@ -169,11 +181,11 @@ hack_unsupported_tap wkhtmltopdf
 unset -f hack_unsupported_tap
 unset -f hack_unsupported_tap_failed
 
-fancy_echo "Installing mysql-client@5.7 ..."
+print_step "Installing mysql-client@5.7 ..."
 HOMEBREW_NO_INSTALL_FROM_API=1 brew install mysql-client@5.7
 brew link --force mysql-client@5.7
 
-fancy_echo "Installing wkhtmltopdf ..."
+print_step "Installing wkhtmltopdf ..."
 HOMEBREW_NO_INSTALL_FROM_API=1 brew install wkhtmltopdf
 
 # Mac apps
@@ -211,7 +223,7 @@ if [ ! -d "/Applications/Slack.app" ]; then
 fi
 
 if [ ! -d "$HOME/.asdf" ]; then
-  fancy_echo "Installing asdf version manager ..."
+  print_step "Installing asdf version manager ..."
   brew install asdf
   append_to_zshrc "source $(brew --prefix asdf)/libexec/asdf.sh"
 fi
@@ -254,7 +266,7 @@ gem_install_or_update() {
 # shellcheck disable=SC1091
 . "$(brew --prefix asdf)/libexec/asdf.sh"
 
-fancy_echo "Installing latest Ruby ..."
+print_step "Installing latest Ruby ..."
 add_or_update_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
 install_asdf_language "ruby"
 gem update --system
@@ -266,13 +278,13 @@ append_to_zshrc 'export DLDFLAGS="-Wl,-undefined,dynamic_lookup"' 1
 append_to_zshrc 'export OPENSSL_CFLAGS="-Wno-error=implicit-function-declaration"' 1
 append_to_zshrc 'export CFLAGS=-Wno-error="implicit-function-declaration"' 1
 
-fancy_echo "Installing latest Node ..."
+print_step "Installing latest Node ..."
 add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
 
 if [ -f "$HOME/.laptop.local" ]; then
-  fancy_echo "Running your customizations from ~/.laptop.local ..."
+  print_step "Running your customizations from ~/.laptop.local ..."
   . "$HOME/.laptop.local"
 fi
 
-fancy_echo "Your laptop setup is complete!"
+print_success "Your laptop setup is complete!"
