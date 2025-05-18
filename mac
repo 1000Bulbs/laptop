@@ -1,5 +1,5 @@
-#!/bin/sh
-# ft=shell
+#!/usr/bin/env bash
+# vim: set filetype=bash tabstop=2 shiftwidth=2 expandtab :
 
 fancy_echo() {
   local fmt="$1"
@@ -276,5 +276,3 @@ if [ -f "$HOME/.laptop.local" ]; then
 fi
 
 fancy_echo "Your laptop setup is complete!"
-
-# ft=shell
