@@ -8,16 +8,15 @@ env:
   HOMEBREW_NO_AUTO_UPDATE: 1
 
 jobs:
-  osx:
-    name: "macOS ${{ matrix.os }}"
-    runs-on: "macos-${{ matrix.os }}"
+  lint:
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
         os:
-          - "14"
-          - "15"
+          - macos-14
+          - macos-15
 
     steps:
       - name: Checkout code
@@ -28,6 +27,22 @@ jobs:
 
       - name: Lint
         run: shellcheck mac
+
+  test:
+    runs-on: ${{ matrix.os }}
+    needs:
+      - lint
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-14
+          - macos-15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install legacy ASDF v0.15.0
         run: |
