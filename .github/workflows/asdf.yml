@@ -1,8 +1,14 @@
 name: asdf
 
 "on":
-  push:
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+  push:
+    paths-ignore:
+      - "**/*.md"
+  schedule:
+    - cron: 0 2 * * 0
 
 env:
   HOMEBREW_NO_AUTO_UPDATE: 1
