@@ -149,3 +149,42 @@ Test customizations script
 ```sh
 shellcheck ~/.laptop.local
 ```
+
+## Git Hooks
+
+This project includes [pre-commit](https://pre-commit.com/) integration via Git
+hooks to automatically run formatting and linting checks **before each commit**.
+
+These hooks help catch errors early and keep the codebase consistent across
+contributors.
+
+### Install Git Hooks
+
+```bash
+make install-hooks
+```
+
+This will:
+
+- Install pre-commit (if not already installed)
+- Register a Git hook in .git/hooks/pre-commit
+- Automatically run checks like:
+- Linting with shellcheck and yamllint
+
+### Remove Git Hooks
+
+```bash
+make uninstall-hooks
+```
+
+This removes the Git pre-commit hook and disables automatic checks.
+
+💡 Even with hooks uninstalled, you can still run the same checks manually with
+`make test`.
+
+Why Use Git Hooks?
+
+- Ensures consistency across contributors
+- Catches syntax and style issues before they hit CI
+- Prevents accidental commits of broken or misformatted files
+- Integrates seamlessly with your local workflow
