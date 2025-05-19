@@ -15,3 +15,10 @@ repos:
         language: system
         types: [yaml]
         files: \.(yml|yaml)$
+
+      - id: markdownlint
+        name: markdownlint-cli2
+        entry: markdownlint-cli2
+        language: system
+        types: [markdown]
+        files: \.(md|markdown)$

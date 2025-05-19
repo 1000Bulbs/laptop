@@ -1,4 +1,4 @@
-# Docker 
+# Docker
 
 ## Login
 
@@ -33,20 +33,22 @@ WARNING! Using --password via the CLI is insecure. Use --password-stdin.
 
 ## Docker Create Access Token
 
-- [Sign into Docker](./Docker%20home%20page.png)
-- [Select Account Settings](./Docker%20nav%20menu.png)
-- [Select Personal Access Tokens](./Docker%20Account%20settings.png)
-- [Click Generate New Token](./Docker%20Personal%20access%20tokens.png)
-- [Select Read/Write Permissions](./Docker%20Create%20access%20token%20-%20Access%20permissions.png)
-- [Click Generate](./Docker%20Create%20access%20token%20-%20Generate.png)
-- [Click Copy to copy the token value](./Docker%20Copy%20access%20token.png)
+* [Sign into Docker](./Docker%20home%20page.png)
+* [Select Account Settings](./Docker%20nav%20menu.png)
+* [Select Personal Access Tokens](./Docker%20Account%20settings.png)
+* [Click Generate New Token](./Docker%20Personal%20access%20tokens.png)
+* [Select Read/Write Permissions](./Docker%20Create%20access%20token%20-%20Access%20permissions.png)
+* [Click Generate](./Docker%20Create%20access%20token%20-%20Generate.png)
+* [Click Copy to copy the token value](./Docker%20Copy%20access%20token.png)
 
 Save your Personal Access Token (PAT) as part of your user profile
+
 ```bash
-$ echo <paste-your-token-value-here> > ~/.docker/docker.pat
+echo <paste-your-token-value-here> > ~/.docker/docker.pat
 ```
 
 Login using your Personal Access Token (PAT)
+
 ```bash
 $ docker login -u <username> --password-stdin < ~/.docker/docker.pat
 Login Succeeded
@@ -55,6 +57,7 @@ Login Succeeded
 Docker will reuse your credentials automatically from the keystore on your operating system,
 but there are occasions where Docker will be logged out, and you must repeat the login
 sequence. To aid in that step consider creating an alias of the above.
+
 ```bash
-$ alias docker:auth='docker login -u <username> --password-stdin < ~/.docker/docker.pat'
+alias docker:auth='docker login -u <username> --password-stdin < ~/.docker/docker.pat'
 ```

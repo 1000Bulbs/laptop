@@ -4,10 +4,10 @@
 .PHONY: install-hooks lint uninstall-hooks help
 
 install-hooks:  ## Install all tools and register pre-commit Git hook
-	brew install pre-commit shellcheck yamllint
+	brew install pre-commit shellcheck yamllint  markdownlint-cli2
 	pre-commit install
 
-lint:  ## Run all checks (shellcheck, yamllint)
+lint:  ## Run all checks (shellcheck, yamllint, and markdownlint-cli2)
 	pre-commit run --all-files
 
 uninstall-hooks:  ## Uninstall pre-commit hook from .git/hooks
