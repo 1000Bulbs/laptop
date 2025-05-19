@@ -28,11 +28,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install shellcheck
-        run: brew install shellcheck
+      - name: Install linting tools
+        run: brew install shellcheck yamllint
 
-      - name: Lint
+      - name: shellcheck
         run: shellcheck mac
+
+      - name: yamllint
+        run: yamllint .
 
   test:
     runs-on: ${{ matrix.os }}
