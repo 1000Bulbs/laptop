@@ -2,7 +2,7 @@
 
 The 1000bulbs development team has recommended that all developers use a consistent setup on their local workstations, so that we can continually improve and streamline local development by relying on a known and consistent folder structure.
 
-<pre>
+```text
 $workspace/ ............... top-level folder for 1000bulbs (e.g. developer name of choice)
  \_ 1kb/ .................. PHP application stack
  \_ aws-iac/ .............. AWS Terraform assets
@@ -15,7 +15,7 @@ $workspace/ ............... top-level folder for 1000bulbs (e.g. developer name 
  \_ strangler-ami/ ........ AWS Machine Image for deploying the above
  \_ WyattERP/ ............. implementation of our Wyatt server
  \_ master.key ............ file housing the Master Key we use for both PHP and RoR
-</pre>
+```
 
 ## `master.key`
 
@@ -54,11 +54,13 @@ by placing this is your `.zshrc` file it will be available everywhere on your ma
 ## Multiple Simultaneous Terminal Windows
 
 Install `iTerm2`
+
 ```bash
 brew install wouterdebie/repo/i2cssh
 ```
 
 Update `~/.ssh/config` to include server definitions
+
 ```bash
 # Example: adding the 1st QA Strangler server
 Host qa-strangler-01
@@ -73,4 +75,3 @@ i2cssh -exec strangler-01 strangler-02 strangler-03 stragnler-04 strangler-05
 
 `Command + Shift + i` toggles the ability to type on all terminals
 `Command + Shift + Enter` toggles zooming a terminal window
-

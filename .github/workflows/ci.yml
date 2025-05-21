@@ -1,33 +1,60 @@
-name: test
+name: ci
 
-'on':
-  push:
+"on":
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+  push:
+    paths-ignore:
+      - "**/*.md"
+  schedule:
+    - cron: 0 2 * * 0
 
 env:
   HOMEBREW_NO_AUTO_UPDATE: 1
 
 jobs:
-  osx:
-    name: "macOS ${{ matrix.os }}"
-    runs-on: "macos-${{ matrix.os }}"
+  lint:
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
         os:
-          - "14"
-          - "15"
+          - macos-14
+          - macos-15
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install shellcheck
-        run: brew install shellcheck
+      - name: Install linting tools
+        run: brew install shellcheck yamllint markdownlint-cli2
 
-      - name: Lint
+      - name: shellcheck
         run: shellcheck mac
+
+      - name: yamllint
+        run: yamllint .
+
+      - name: markdownlint-cli2
+        run: markdownlint-cli2 "**/*.md"
+
+  test:
+    runs-on: ${{ matrix.os }}
+    needs:
+      - lint
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-14
+          - macos-15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Uninstall homebrew
         run: |
