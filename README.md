@@ -1,6 +1,6 @@
 # Laptop
 
-[![ci](https://github.com/1000bulbs/laptop/actions/workflows/test.yml/badge.svg)](https://github.com/1000Bulbs/laptop/actions/workflows/test.yml)
+[![ci](https://github.com/1000bulbs/laptop/actions/workflows/ci.yml/badge.svg)](https://github.com/1000Bulbs/laptop/actions/workflows/ci.yml)
 
 Laptop is a script to set up a macOS laptop for web development.
 
