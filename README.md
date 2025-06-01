@@ -60,6 +60,7 @@ Unix tools:
 - [OpenSSL] for Transport Layer Security (TLS)
 - [RCM] for managing company and personal dotfiles
 - [The Silver Searcher] for finding things in files
+- [Ripgrep] for searching files and directories
 - [Tmux] for saving project state and switching between projects
 - [Zsh] as your shell
 
@@ -67,6 +68,7 @@ Unix tools:
 [OpenSSL]: https://www.openssl.org/
 [RCM]: https://github.com/thoughtbot/rcm
 [The Silver Searcher]: https://github.com/ggreer/the_silver_searcher
+[Ripgrep]: https://github.com/BurntSushi/ripgrep
 [Tmux]: https://tmux.github.io/
 [Zsh]: https://www.zsh.org/
 
