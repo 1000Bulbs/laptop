@@ -331,6 +331,74 @@ print_step "Installing Node ..."
 install_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
 
+print_step "Installing ssh key ..."
+SSH_DIR="$HOME/.ssh"
+KEY_FILE="$SSH_DIR/id_ed25519.pub"
+PRIVATE_KEY="$SSH_DIR/id_ed25519"
+
+if [ ! -f "$KEY_FILE" ]; then
+  print_warning "No SSH key found. Let's create one."
+
+  # Prompt for email until user enters something non-empty
+  while [ -z "${EMAIL:-}" ]; do
+    printf "Enter your @1000bulbs.com email to generate your SSH key: "
+    read -r EMAIL
+  done
+
+  mkdir -p "$SSH_DIR"
+  chmod 700 "$SSH_DIR"
+
+  # Generate the key quietly
+  ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
+
+  # Secure private keys
+  find "$SSH_DIR" -type f \( -name "id_*" ! -name "*.pub" \) -exec chmod 600 {} \;
+
+  # Optionally make public keys readable by others
+  find "$SSH_DIR" -type f -name "*.pub" -exec chmod 644 {} \;
+
+  # Fix ownership (macOS safe)
+  if command -v chown >/dev/null; then
+    chown -R "$USER" "$SSH_DIR"
+  fi
+
+  print_success "✅ SSH key created successfully!"
+  echo "📍 Public key path: $KEY_FILE"
+  echo
+  echo "🔑 Here is your public key:"
+  echo "------------------------------------------------------------"
+  cat "$KEY_FILE"
+  echo "------------------------------------------------------------"
+
+  # Optional: Upload key to GitHub if gh CLI is installed
+  if command -v gh >/dev/null; then
+    echo
+    echo "👉 Now that you've seen your key, we can upload it to GitHub for you."
+    printf "Do you want to upload this SSH key to GitHub now? [y/N] "
+    read -r ANSWER
+    case "$ANSWER" in
+      [Yy])  # Matches Y or y
+        # Check if already authenticated and has required scope
+        if ! gh auth status --hostname github.com --show-token 2>/dev/null | grep -q 'admin:public_key'; then
+          echo "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
+          gh auth login --scopes "admin:public_key" --hostname github.com
+        fi
+
+        # Add SSH key
+        gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
+        print_success "✅  SSH key uploaded to GitHub."
+        ;;
+    esac
+  fi
+else
+  print_success "✅ SSH key already installed."
+fi
+
+# Add SSH key to macOS keychain (if available)
+if command -v ssh-add >/dev/null; then
+  ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null || true
+fi
+
 if [ -f "$HOME/.laptop.local" ]; then
   print_step "Running your customizations from ~/.laptop.local ..."
   . "$HOME/.laptop.local"
