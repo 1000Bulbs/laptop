@@ -44,7 +44,7 @@ as an attachment.
 1000bulbs repos make extensive use of CLI tools and scripts. Many of these
 require access to the Docker Hub and the images we've prepared for development.
 To fully setup your personal workstation to work seamlessly with Docker, see
-the additional instructions for logging into [Docker](./Docker/Docker.md).
+the additional instructions for logging into [Docker](./docs/Docker.md).
 
 ## What This Script Sets Up
 

@@ -4,18 +4,18 @@
 
 Docker provides a number of ways to login:
 
-* Using Docker username / password
-* Using Docker username / Personal Access Token (PAT)
-* Using Github username / password
-* Using Github username / Personal Access Token (PAT)
+- Using Docker username / password
+- Using Docker username / Personal Access Token (PAT)
+- Using Github username / password
+- Using Github username / Personal Access Token (PAT)
 
 1000bulbs prefers that all developers use a Personal Access Token (PAT) when logging into remote systems used by 1000bulbs.
 
 Personal Access Tokens (PATs) provide several advantages over using a regular password:
 
-* Passwords no longer need be exchanged, reducing the threat surface to them
-* Users are allowed multiple PATs, further reducing the threat surface
-* PATs are easy to revoke and replace, saving valuable time in not changing a password
+- Passwords no longer need be exchanged, reducing the threat surface to them
+- Users are allowed multiple PATs, further reducing the threat surface
+- PATs are easy to revoke and replace, saving valuable time in not changing a password
 
 ## CLI Login
 
@@ -33,13 +33,13 @@ WARNING! Using --password via the CLI is insecure. Use --password-stdin.
 
 ## Docker Create Access Token
 
-* [Sign into Docker](./Docker%20home%20page.png)
-* [Select Account Settings](./Docker%20nav%20menu.png)
-* [Select Personal Access Tokens](./Docker%20Account%20settings.png)
-* [Click Generate New Token](./Docker%20Personal%20access%20tokens.png)
-* [Select Read/Write Permissions](./Docker%20Create%20access%20token%20-%20Access%20permissions.png)
-* [Click Generate](./Docker%20Create%20access%20token%20-%20Generate.png)
-* [Click Copy to copy the token value](./Docker%20Copy%20access%20token.png)
+- [Sign into Docker](./docker/sign-into-docker.png)
+- [Select Account Settings](./docker/select-account-settings.png)
+- [Select Personal Access Tokens](./docker/select-personal-access-tokens.png)
+- [Click Generate New Token](./docker/click-generate-new-token.png)
+- [Select Read/Write Permissions](./docker/select-read-write-permissions.png)
+- [Click Generate](./docker/click-generate.png)
+- [Click Copy to copy the token value](./docker/click-copy-to-copy-the-token-value.png)
 
 Save your Personal Access Token (PAT) as part of your user profile
 
