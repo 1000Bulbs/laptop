@@ -48,7 +48,7 @@ the additional instructions for logging into [Docker](./docs/Docker.md).
 
 ## What This Script Sets Up
 
-macOS tools:
+### macOS tools
 
 - [Homebrew] for managing operating system libraries.
 
@@ -107,6 +107,24 @@ Databases:
 
 [Postgres]: https://www.postgresql.org/
 [MySQL]: https://www.mysql.com
+
+### macOS apps
+
+- [1Password] for managing passwords and sensitive information
+- [Docker] for containerization
+- [Google Chrome] for web browsing
+- [iTerm2] for terminal emulation
+- [Microsoft Teams] for office communication
+- [Rectangle] for window management
+- [Slack] for team communication
+
+[1Password]: https://1password.com/
+[Docker]: https://www.docker.com/
+[Google Chrome]: https://www.google.com/chrome/
+[iTerm2]: https://iterm2.com/
+[Microsoft Teams]: https://www.microsoft.com/en-us/microsoft-teams/
+[Rectangle]: https://rectangleapp.com/
+[Slack]: https://slack.com/
 
 ## Customizations
 
