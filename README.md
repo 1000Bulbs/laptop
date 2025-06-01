@@ -114,17 +114,21 @@ Databases:
 - [Docker] for containerization
 - [Google Chrome] for web browsing
 - [iTerm2] for terminal emulation
+- [Loom] for screen recording and sharing
 - [Microsoft Teams] for office communication
 - [Rectangle] for window management
 - [Slack] for team communication
+- [Zoom] for video conferencing
 
 [1Password]: https://1password.com/
 [Docker]: https://www.docker.com/
 [Google Chrome]: https://www.google.com/chrome/
 [iTerm2]: https://iterm2.com/
+[Loom]: https://www.loom.com/
 [Microsoft Teams]: https://www.microsoft.com/en-us/microsoft-teams/
 [Rectangle]: https://rectangleapp.com/
 [Slack]: https://slack.com/
+[Zoom]: https://zoom.us/
 
 ## Customizations
 
