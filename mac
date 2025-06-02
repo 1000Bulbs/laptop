@@ -370,8 +370,8 @@ if [ ! -f "$KEY_FILE" ]; then
   cat "$KEY_FILE"
   echo "------------------------------------------------------------"
 
-  # Optional: Upload key to GitHub if gh CLI is installed
-  if command -v gh >/dev/null; then
+  # Upload key to GitHub if gh CLI is installed and not in CI
+  if [ -z "$CI" ] && command -v gh >/dev/null; then
     echo
     echo "👉 Now that you've seen your key, we can upload it to GitHub for you."
     printf "Do you want to upload this SSH key to GitHub now? [y/N] "
