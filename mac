@@ -399,11 +399,6 @@ if command -v ssh-add >/dev/null; then
   ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null || true
 fi
 
-if [ -f "$HOME/.laptop.local" ]; then
-  print_step "Running your customizations from ~/.laptop.local ..."
-  . "$HOME/.laptop.local"
-fi
-
 # macOS Defaults Configuration
 # This script customizes system behavior for a smoother and faster user experience.
 
