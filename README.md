@@ -44,11 +44,11 @@ as an attachment.
 1000bulbs repos make extensive use of CLI tools and scripts. Many of these
 require access to the Docker Hub and the images we've prepared for development.
 To fully setup your personal workstation to work seamlessly with Docker, see
-the additional instructions for logging into [Docker](./Docker/Docker.md).
+the additional instructions for logging into [Docker](./docs/Docker.md).
 
 ## What This Script Sets Up
 
-macOS tools:
+### macOS tools
 
 - [Homebrew] for managing operating system libraries.
 
@@ -60,6 +60,7 @@ Unix tools:
 - [OpenSSL] for Transport Layer Security (TLS)
 - [RCM] for managing company and personal dotfiles
 - [The Silver Searcher] for finding things in files
+- [Ripgrep] for searching files and directories
 - [Tmux] for saving project state and switching between projects
 - [Zsh] as your shell
 
@@ -67,6 +68,7 @@ Unix tools:
 [OpenSSL]: https://www.openssl.org/
 [RCM]: https://github.com/thoughtbot/rcm
 [The Silver Searcher]: https://github.com/ggreer/the_silver_searcher
+[Ripgrep]: https://github.com/BurntSushi/ripgrep
 [Tmux]: https://tmux.github.io/
 [Zsh]: https://www.zsh.org/
 
@@ -105,6 +107,28 @@ Databases:
 
 [Postgres]: https://www.postgresql.org/
 [MySQL]: https://www.mysql.com
+
+### macOS apps
+
+- [1Password] for managing passwords and sensitive information
+- [Docker] for containerization
+- [Google Chrome] for web browsing
+- [iTerm2] for terminal emulation
+- [Loom] for screen recording and sharing
+- [Microsoft Teams] for office communication
+- [Rectangle] for window management
+- [Slack] for team communication
+- [Zoom] for video conferencing
+
+[1Password]: https://1password.com/
+[Docker]: https://www.docker.com/
+[Google Chrome]: https://www.google.com/chrome/
+[iTerm2]: https://iterm2.com/
+[Loom]: https://www.loom.com/
+[Microsoft Teams]: https://www.microsoft.com/en-us/microsoft-teams/
+[Rectangle]: https://rectangleapp.com/
+[Slack]: https://slack.com/
+[Zoom]: https://zoom.us/
 
 ## Customizations
 

@@ -1,2 +1,0 @@
-# Scan the ~/.ssh/config file and list the hosts defined there
-alias ssh.hosts='awk '\''/^Host/ { host=$2; getline } /HostName/ { ip=$2 ; getline } /User/ { user=$2 ; getline } ip { print host " " user"@"ip ; ip=0 }'\'' ~/.ssh/config | column -t | sort'

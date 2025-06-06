@@ -45,6 +45,9 @@ jobs:
     needs:
       - lint
 
+    env:
+      EMAIL: test@1000bulbs.com
+
     strategy:
       fail-fast: false
       matrix:
