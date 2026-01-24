@@ -151,11 +151,12 @@ fi
 
 log "Installing homebrew ..."
 if ! command -v brew >/dev/null; then
-  run_cmd "installing homebrew" /bin/bash -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
   append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
   export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+
+  log_success "installing homebrew succeeded"
 else
   log_success "homebrew is already installed"
 fi
