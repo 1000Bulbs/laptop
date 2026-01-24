@@ -129,13 +129,12 @@ fi
 
 append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
 
-arch="$(uname -m)"
-
-if [ "$arch" = "arm64" ]; then
-  HOMEBREW_PREFIX="/opt/homebrew"
-else
-  HOMEBREW_PREFIX="/usr/local"
+if [ "$(uname -m)" != "arm64" ]; then
+  log_error "This script only supports Apple Silicon (M series) Macs."
+  exit 1
 fi
+
+HOMEBREW_PREFIX="/opt/homebrew"
 
 case "$SHELL" in
 */zsh)
@@ -148,10 +147,8 @@ case "$SHELL" in
   ;;
 esac
 
-if [ "$arch" = "arm64" ]; then
-  if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
-    run_cmd "Install Rosetta" softwareupdate --install-rosetta --agree-to-license
-  fi
+if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
+  run_cmd "Installed Rosetta" softwareupdate --install-rosetta --agree-to-license
 fi
 
 if ! command -v brew >/dev/null; then
