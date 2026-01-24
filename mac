@@ -47,9 +47,9 @@ if ! command -v brew >/dev/null; then
   printf "\n\033[1;38;2;0;135;255m==> Installing Homebrew...\033[0m\n"
   bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
-  printf "\033[1;38;2;0;255;0m✔ Homebrew installed successfully\033[0m\n"
+  printf "\033[38;2;0;255;0m✔ Homebrew installed successfully\033[0m\n"
 else
-  printf "\033[1;38;2;0;255;0m✔ Homebrew already installed\033[0m\n"
+  printf "\033[38;2;0;255;0m✔ Homebrew already installed\033[0m\n"
 fi
 
 # Ensure brew is in PATH for this session
@@ -62,9 +62,9 @@ export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 if ! command -v gum >/dev/null; then
   printf "\n\033[1;38;2;0;135;255m==> Installing gum ...\033[0m\n"
   brew install gum
-  printf "\033[1;38;2;0;255;0m✔ gum installed successfully\033[0m\n"
+  printf "\033[38;2;0;255;0m✔ gum installed successfully\033[0m\n"
 else
-  printf "\033[1;38;2;0;255;0m✔ gum already installed\033[0m\n"
+  printf "\033[38;2;0;255;0m✔ gum already installed\033[0m\n"
 fi
 
 # =============================================================================
