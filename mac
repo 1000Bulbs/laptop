@@ -110,11 +110,6 @@ gem_install_or_update() {
   fi
 }
 
-version_less_than() {
-  # Usage: version_less_than "1.2.3" "1.4.0" => true if 1.2.3 < 1.4.0
-  [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" != "$2" ]
-}
-
 trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 set -e
@@ -237,41 +232,7 @@ if [ ! -d "$HOME/.asdf" ]; then
   run_cmd "Install asdf" brew install asdf
   append_to_zshrc "$asdf_zsh_setup"
 else
-  echo "asdf already installed. Checking version ..."
-
-  if [ "$(command -v asdf)" != "$HOMEBREW_PREFIX/bin/asdf" ]; then
-    # legacy version, source it before using
-    if [ -f "$HOME/.asdf/asdf.sh" ]; then
-      . "$HOME/.asdf/asdf.sh"
-    else
-      log_error "Legacy asdf installation detected but asdf.sh not found!"
-      exit 1
-    fi
-  fi
-
-  current_asdf_version="$(asdf version)"
-  normalized_version="$(echo "$current_asdf_version" | sed -E 's/^v//; s/-.*$//')"
-
-  if [ -z "$current_asdf_version" ]; then
-    log_warning "Unable to detect current asdf version. Skipping upgrade check."
-  elif version_less_than "$normalized_version" "0.16.0"; then
-    log_warning "asdf version $current_asdf_version is older than 0.16.0."
-    log "Upgrading to new Go-based asdf version (>= 0.16.0) automatically ..."
-
-    log "Commenting out legacy source line in .zshrc ..."
-    if grep -q "$HOMEBREW_PREFIX/libexec/asdf.sh" "$HOME/.zshrc"; then
-      sed -i.bak "s|^\(.*$HOMEBREW_PREFIX/libexec/asdf.sh.*\)|# \1|" "$HOME/.zshrc"
-    fi
-
-    run_cmd "Back up old asdf directory" mv "$HOME/.asdf" "$HOME/.asdf.bak"
-
-    run_cmd "Install asdf" brew install asdf
-    append_to_zshrc "$asdf_zsh_setup"
-
-    log_warning "Old asdf versions are no longer supported. You’ve been upgraded automatically."
-  else
-    log_success "asdf version $current_asdf_version is up to date."
-  fi
+  log_success "asdf already installed."
 fi
 
 if [ ! -f "$HOME/.asdfrc" ]; then
