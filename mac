@@ -1,33 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 
-log() {
-  printf "\n\033[1;34m==> %s\033[0m\n" "$1"
-}
-
-log_success() {
-  printf "\033[1;32m✔ %s\033[0m\n" "$1"
-}
-
-log_warning() {
-  printf "\033[1;33m⚠ %s\033[0m\n" "$1"
-}
-
-log_error() {
-  printf "\033[1;31m✖ %s\033[0m\n" "$1"
-}
-
-run_cmd() {
-  local title="$1"
-  shift
-  log "Executing: $*"
-  if "$@"; then
-    log_success "$title succeeded"
-  else
-    log_error "$title failed"
-    exit 1
-  fi
-}
+# =============================================================================
+# BOOTSTRAP PHASE - Basic functions that work before gum is installed
+# =============================================================================
 
 append_to_zshrc() {
   local text="$1" zshrc
@@ -47,6 +23,84 @@ append_to_zshrc() {
     fi
   fi
 }
+
+trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
+
+set -e
+
+# =============================================================================
+# STEP 1: Validate Apple Silicon (basic output only)
+# =============================================================================
+
+if [ "$(uname -m)" != "arm64" ]; then
+  printf "\033[1;31m✖ This script only supports Apple Silicon (M series) Macs.\033[0m\n"
+  exit 1
+fi
+
+HOMEBREW_PREFIX="/opt/homebrew"
+
+# =============================================================================
+# STEP 2: Install Homebrew (basic output only)
+# =============================================================================
+
+if ! command -v brew >/dev/null; then
+  printf "\n\033[1;34m==> Installing Homebrew...\033[0m\n"
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
+  printf "\033[1;32m✔ Homebrew installed successfully\033[0m\n"
+else
+  printf "\033[1;32m✔ Homebrew already installed\033[0m\n"
+fi
+
+# Ensure brew is in PATH for this session
+export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+
+# =============================================================================
+# STEP 3: Install gum (basic output only)
+# =============================================================================
+
+if ! command -v gum >/dev/null; then
+  printf "\n\033[1;34m==> Installing gum...\033[0m\n"
+  brew install gum
+  printf "\033[1;32m✔ gum installed successfully\033[0m\n"
+else
+  printf "\033[1;32m✔ gum already installed\033[0m\n"
+fi
+
+# =============================================================================
+# GUM NOW AVAILABLE - Define fancy logging functions
+# =============================================================================
+
+log() {
+  gum style --foreground 12 --bold "==> $1"
+}
+
+log_success() {
+  gum style --foreground 2 "✔ $1"
+}
+
+log_warning() {
+  gum style --foreground 3 "⚠ $1"
+}
+
+log_error() {
+  gum style --foreground 1 "✖ $1"
+}
+
+run_cmd() {
+  local title="$1"
+  shift
+  if gum spin --spinner dot --title "$title ..." -- "$@"; then
+    log_success "$title succeeded"
+  else
+    log_error "$title failed"
+    exit 1
+  fi
+}
+
+# =============================================================================
+# Helper functions (now using gum-powered logging)
+# =============================================================================
 
 update_shell() {
   local shell_path
@@ -117,16 +171,9 @@ install_cask_app() {
   fi
 }
 
-trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
-
-set -e
-
-if [ "$(uname -m)" != "arm64" ]; then
-  log_error "This script only supports Apple Silicon (M series) Macs."
-  exit 1
-fi
-
-HOMEBREW_PREFIX="/opt/homebrew"
+# =============================================================================
+# STEP 4: zshrc setup & local scripts directory (now with gum)
+# =============================================================================
 
 log "Installing zshrc config ..."
 if [ ! -f "$HOME/.zshrc" ]; then
@@ -135,6 +182,9 @@ else
   log_success "zshrc config already exists"
 fi
 
+# Add homebrew to zshrc
+append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
+
 log "Creating local scripts directory ..."
 if [ ! -d "$HOME/.local/scripts/" ]; then
   run_cmd "creating local scripts directory" mkdir "$HOME/.local/scripts"
@@ -142,6 +192,10 @@ if [ ! -d "$HOME/.local/scripts/" ]; then
 else
   log_success "local scripts directory already exists"
 fi
+
+# =============================================================================
+# STEP 5: Shell update to homebrew's zsh
+# =============================================================================
 
 case "$SHELL" in
 */zsh)
@@ -154,6 +208,10 @@ case "$SHELL" in
   ;;
 esac
 
+# =============================================================================
+# STEP 6: Rosetta installation
+# =============================================================================
+
 log "Installing rosetta ..."
 if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
   run_cmd "installing rosetta" softwareupdate --install-rosetta --agree-to-license
@@ -161,17 +219,9 @@ else
   log_success "rosetta already installed"
 fi
 
-log "Installing homebrew ..."
-if ! command -v brew >/dev/null; then
-  bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-  append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
-  export PATH="$HOMEBREW_PREFIX/bin:$PATH"
-
-  log_success "installing homebrew succeeded"
-else
-  log_success "homebrew is already installed"
-fi
+# =============================================================================
+# STEP 7: Brew bundle (remaining packages)
+# =============================================================================
 
 log "Uninstalling old homebrew cask"
 if brew list | grep -Fq brew-cask; then
@@ -215,6 +265,10 @@ brew "libpq", link: true
 EOF
 log_success "homebrew packages installed"
 
+# =============================================================================
+# STEP 8: wkhtmltopdf installation
+# =============================================================================
+
 log "Installing wkhtmltopdf ..."
 if ! command -v wkhtmltopdf &>/dev/null; then
   run_cmd "downloading wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
@@ -230,6 +284,10 @@ else
   log_success "wkhtmltopdf already installed"
 fi
 
+# =============================================================================
+# STEP 9: Mac apps installation
+# =============================================================================
+
 log "Installing mac apps ..."
 install_cask_app "/Applications/1Password.app" "1password" "1Password"
 install_cask_app "/Applications/Docker.app" "docker" "Docker"
@@ -238,6 +296,10 @@ install_cask_app "/Applications/Loom.app" "loom" "Loom"
 install_cask_app "/Applications/Microsoft Teams.app" "microsoft-teams" "Microsoft Teams"
 install_cask_app "/Applications/Slack.app" "slack" "Slack"
 install_cask_app "/Applications/zoom.us.app" "zoom" "Zoom"
+
+# =============================================================================
+# STEP 10: asdf + Ruby + Node
+# =============================================================================
 
 asdf_zsh_setup=$(
   cat <<'EOF'
@@ -294,6 +356,10 @@ log "Installing Node ..."
 install_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
 
+# =============================================================================
+# STEP 11: SSH key setup (fancy prompts)
+# =============================================================================
+
 log "Installing ssh key ..."
 SSH_DIR="$HOME/.ssh"
 KEY_FILE="$SSH_DIR/id_ed25519.pub"
@@ -304,8 +370,7 @@ if [ ! -f "$KEY_FILE" ]; then
 
   # Prompt for email until user enters something non-empty
   while [ -z "${EMAIL:-}" ]; do
-    printf "Enter your @1000bulbs.com email to generate your SSH key: "
-    read -r EMAIL
+    EMAIL=$(gum input --placeholder "you@1000bulbs.com" --header "Enter your email for SSH key:")
   done
 
   mkdir -p "$SSH_DIR"
@@ -325,32 +390,28 @@ if [ ! -f "$KEY_FILE" ]; then
     chown -R "$USER" "$SSH_DIR"
   fi
 
-  log_success "✅ SSH key created successfully!"
-  echo "📍 Public key path: $KEY_FILE"
+  log_success "SSH key created successfully!"
   echo
-  echo "🔑 Here is your public key:"
-  echo "------------------------------------------------------------"
-  cat "$KEY_FILE"
-  echo "------------------------------------------------------------"
+  gum style --border rounded --padding "1 2" --border-foreground 12 \
+    "📍 Public key path: $KEY_FILE"
+  echo
+  gum style --foreground 12 --bold "🔑 Your public key:"
+  gum style --border rounded --padding "1 2" "$(cat "$KEY_FILE")"
 
   # Upload key to GitHub if gh CLI is installed and not in CI
   if [ -z "$CI" ] && command -v gh >/dev/null; then
     echo
-    echo "👉 Now that you've seen your key, we can upload it to GitHub for you."
-    printf "Do you want to upload this SSH key to GitHub now? [y/N] "
-    read -r ANSWER
-    case "$ANSWER" in
-    [Yy]) # Matches Y or y
+    gum style --foreground 12 "👉 Now that you've seen your key, we can upload it to GitHub for you."
+    if gum confirm "Upload this SSH key to GitHub now?"; then
       # Check if already authenticated and has required scope
       if ! gh auth status --hostname github.com --show-token 2>/dev/null | grep -q 'admin:public_key'; then
-        echo "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
+        gum style --foreground 12 "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
         gh auth login --scopes "admin:public_key" --hostname github.com
       fi
 
       # Add SSH key
       run_cmd "uploading SSH key to GitHub" gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
-      ;;
-    esac
+    fi
   fi
 else
   log_success "ssh key already installed"
@@ -364,6 +425,10 @@ if command -v ssh-add >/dev/null; then
     log_warning "could not add ssh key to keychain (non-fatal)"
   fi
 fi
+
+# =============================================================================
+# STEP 12: macOS defaults
+# =============================================================================
 
 # macOS Defaults Configuration
 # This script customizes system behavior for a smoother and faster user experience.
@@ -414,7 +479,7 @@ defaults write -g NSTableViewDefaultSizeMode -int 3
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
 
-# Don’t show the "open dialog" when launching document-based apps
+# Don't show the "open dialog" when launching document-based apps
 # Revert: add the following line to ~/.laptop.local
 #   defaults write -g NSShowAppCentricOpenPanelInsteadOfUntitledFile -bool true
 defaults write -g NSShowAppCentricOpenPanelInsteadOfUntitledFile -bool false
@@ -508,4 +573,12 @@ for app in "Dock" "Finder" "SystemUIServer"; do
   killall "$app" >/dev/null 2>&1 || true
 done
 
-log_success "Your laptop setup is complete! (Some changes may require a reboot to take full effect.)"
+# =============================================================================
+# STEP 13: Success message
+# =============================================================================
+
+echo
+gum style --border double --padding "1 4" --border-foreground 2 --foreground 2 --bold \
+  "✔ Your laptop setup is complete!" \
+  "" \
+  "Some changes may require a reboot to take full effect."
