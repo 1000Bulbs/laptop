@@ -71,20 +71,23 @@ fi
 # GUM NOW AVAILABLE - Define fancy logging functions
 # =============================================================================
 
+# Force color output for gum
+export CLICOLOR_FORCE=1
+
 log() {
-  gum style --foreground 12 --bold "==> $1"
+  gum style --foreground "#0087ff" --bold "==> $1"
 }
 
 log_success() {
-  gum style --foreground 2 "✔ $1"
+  gum style --foreground "#00ff00" "✔ $1"
 }
 
 log_warning() {
-  gum style --foreground 3 "⚠ $1"
+  gum style --foreground "#ffff00" "⚠ $1"
 }
 
 log_error() {
-  gum style --foreground 1 "✖ $1"
+  gum style --foreground "#ff0000" "✖ $1"
 }
 
 run_cmd() {
@@ -392,20 +395,20 @@ if [ ! -f "$KEY_FILE" ]; then
 
   log_success "SSH key created successfully!"
   echo
-  gum style --border rounded --padding "1 2" --border-foreground 12 \
+  gum style --border rounded --padding "1 2" --border-foreground "#0087ff" \
     "📍 Public key path: $KEY_FILE"
   echo
-  gum style --foreground 12 --bold "🔑 Your public key:"
+  gum style --foreground "#0087ff" --bold "🔑 Your public key:"
   gum style --border rounded --padding "1 2" "$(cat "$KEY_FILE")"
 
   # Upload key to GitHub if gh CLI is installed and not in CI
   if [ -z "$CI" ] && command -v gh >/dev/null; then
     echo
-    gum style --foreground 12 "👉 Now that you've seen your key, we can upload it to GitHub for you."
+    gum style --foreground "#0087ff" "👉 Now that you've seen your key, we can upload it to GitHub for you."
     if gum confirm "Upload this SSH key to GitHub now?"; then
       # Check if already authenticated and has required scope
       if ! gh auth status --hostname github.com --show-token 2>/dev/null | grep -q 'admin:public_key'; then
-        gum style --foreground 12 "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
+        gum style --foreground "#0087ff" "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
         gh auth login --scopes "admin:public_key" --hostname github.com
       fi
 
@@ -578,7 +581,7 @@ done
 # =============================================================================
 
 echo
-gum style --border double --padding "1 4" --border-foreground 2 --foreground 2 --bold \
+gum style --border double --padding "1 4" --border-foreground "#00ff00" --foreground "#00ff00" --bold \
   "✔ Your laptop setup is complete!" \
   "" \
   "Some changes may require a reboot to take full effect."
