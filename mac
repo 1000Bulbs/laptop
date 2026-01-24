@@ -121,6 +121,13 @@ trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 set -e
 
+if [ "$(uname -m)" != "arm64" ]; then
+  log_error "This script only supports Apple Silicon (M series) Macs."
+  exit 1
+fi
+
+HOMEBREW_PREFIX="/opt/homebrew"
+
 log "Installing zshrc config ..."
 if [ ! -f "$HOME/.zshrc" ]; then
   run_cmd "installing zshrc config" touch "$HOME/.zshrc"
@@ -135,13 +142,6 @@ if [ ! -d "$HOME/.local/scripts/" ]; then
 else
   log_success "local scripts directory already exists"
 fi
-
-if [ "$(uname -m)" != "arm64" ]; then
-  log_error "This script only supports Apple Silicon (M series) Macs."
-  exit 1
-fi
-
-HOMEBREW_PREFIX="/opt/homebrew"
 
 case "$SHELL" in
 */zsh)
