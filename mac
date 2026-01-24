@@ -22,7 +22,7 @@ run_cmd() {
   shift
   log "Executing: $*"
   if "$@"; then
-    log_success "$title"
+    log_success "$title succeeded"
   else
     log_error "$title failed"
     exit 1
@@ -143,7 +143,7 @@ case "$SHELL" in
 esac
 
 if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
-  run_cmd "Installed Rosetta" softwareupdate --install-rosetta --agree-to-license
+  run_cmd "Installing Rosetta" softwareupdate --install-rosetta --agree-to-license
 fi
 
 if ! command -v brew >/dev/null; then
@@ -157,7 +157,7 @@ if ! command -v brew >/dev/null; then
 fi
 
 if brew list | grep -Fq brew-cask; then
-  run_cmd "Uninstall old Homebrew-Cask" brew uninstall --force brew-cask
+  run_cmd "Uninstalling old Homebrew-Cask" brew uninstall --force brew-cask
 fi
 
 brew analytics off
@@ -195,16 +195,15 @@ EOF
 
 if ! command -v wkhtmltopdf &>/dev/null; then
   log "Installing wkhtmltopdf"
-  run_cmd "Download wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
+  run_cmd "Downloading wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
     https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg
-  run_cmd "Install wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
+  run_cmd "Installing wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
   rm wkhtmltopdf.pkg
 
   if ! command -v wkhtmltopdf &>/dev/null; then
     log_error "wkhtmltopdf installation failed"
     exit 1
   fi
-  log_success "wkhtmltopdf installed"
 fi
 
 # Mac apps
@@ -229,10 +228,8 @@ EOF
 )
 
 if [ ! -d "$HOME/.asdf" ]; then
-  run_cmd "Install asdf" brew install asdf
+  run_cmd "Installing asdf" brew install asdf
   append_to_zshrc "$asdf_zsh_setup"
-else
-  log_success "asdf already installed."
 fi
 
 if [ ! -f "$HOME/.asdfrc" ]; then
@@ -282,7 +279,7 @@ if [ ! -f "$KEY_FILE" ]; then
   chmod 700 "$SSH_DIR"
 
   # Generate the key quietly
-  run_cmd "Generate SSH key" ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
+  run_cmd "Generating SSH key" ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
 
   # Secure private keys
   find "$SSH_DIR" -type f \( -name "id_*" ! -name "*.pub" \) -exec chmod 600 {} \;
@@ -318,7 +315,7 @@ if [ ! -f "$KEY_FILE" ]; then
         fi
 
         # Add SSH key
-        run_cmd "Upload SSH key to GitHub" gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
+        run_cmd "Uploading SSH key to GitHub" gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
         ;;
     esac
   fi
