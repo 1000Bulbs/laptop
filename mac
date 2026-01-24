@@ -249,7 +249,8 @@ fi
 
 log "Creating asdf config ..."
 if [ ! -f "$HOME/.asdfrc" ]; then
-  run_cmd "creating asdf config" echo "legacy_version_file = yes" >"$HOME/.asdfrc"
+  echo "legacy_version_file = yes" >"$HOME/.asdfrc"
+  log_success "asdf config created"
 else
   log_success "asdf config already exists"
 fi
@@ -346,7 +347,11 @@ fi
 
 log "Adding ssh key to keychain ..."
 if command -v ssh-add >/dev/null; then
-  run_cmd "adding ssh key to keychain" ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null || true
+  if ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null; then
+    log_success "ssh key added to keychain"
+  else
+    log_warning "could not add ssh key to keychain (non-fatal)"
+  fi
 fi
 
 # macOS Defaults Configuration
