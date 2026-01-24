@@ -196,7 +196,7 @@ append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
 
 log "Creating local scripts directory ..."
 if [ ! -d "$HOME/.local/scripts/" ]; then
-  run_cmd "creating local scripts directory" mkdir "$HOME/.local/scripts"
+  run_cmd "creating local scripts directory" mkdir -p "$HOME/.local/scripts"
   append_to_zshrc 'export PATH="$HOME/.local/scripts:$PATH"'
 else
   log_success "local scripts directory already exists"
