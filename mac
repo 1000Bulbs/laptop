@@ -105,6 +105,18 @@ gem_install_or_update() {
   fi
 }
 
+install_cask_app() {
+  local app_path="$1"
+  local cask_name="$2"
+  local display_name="${3:-$cask_name}"
+
+  if [ ! -d "$app_path" ]; then
+    run_cmd "installing $display_name" brew install --cask "$cask_name"
+  else
+    log_success "$display_name already installed"
+  fi
+}
+
 trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 set -e
@@ -218,16 +230,14 @@ else
   log_success "wkhtmltopdf already installed"
 fi
 
-# Mac apps
-[ ! -d "/Applications/1Password.app" ] && brew install --cask 1password
-[ ! -d "/Applications/Docker.app" ] && brew install --cask docker
-[ ! -d "/Applications/Google Chrome.app" ] && brew install --cask google-chrome
-[ ! -d "/Applications/iTerm.app" ] && brew install --cask iterm2
-[ ! -d "/Applications/Loom.app" ] && brew install --cask loom
-[ ! -d "/Applications/Microsoft Teams.app" ] && brew install --cask microsoft-teams
-[ ! -d "/Applications/Rectangle.app" ] && brew install --cask rectangle
-[ ! -d "/Applications/Slack.app" ] && brew install --cask slack
-[ ! -d "/Applications/zoom.us.app" ] && brew install --cask zoom
+log "Installing mac apps ..."
+install_cask_app "/Applications/1Password.app" "1password" "1Password"
+install_cask_app "/Applications/Docker.app" "docker" "Docker"
+install_cask_app "/Applications/Google Chrome.app" "google-chrome" "Google Chrome"
+install_cask_app "/Applications/Loom.app" "loom" "Loom"
+install_cask_app "/Applications/Microsoft Teams.app" "microsoft-teams" "Microsoft Teams"
+install_cask_app "/Applications/Slack.app" "slack" "Slack"
+install_cask_app "/Applications/zoom.us.app" "zoom" "Zoom"
 
 asdf_zsh_setup=$(
   cat <<'EOF'
