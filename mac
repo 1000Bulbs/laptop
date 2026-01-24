@@ -180,6 +180,24 @@ install_cask_app() {
   fi
 }
 
+install_cask_app_sudo() {
+  local app_path="$1"
+  local cask_name="$2"
+  local display_name="${3:-$cask_name}"
+
+  if [ ! -d "$app_path" ]; then
+    log "installing $display_name ..."
+    if brew install --cask "$cask_name"; then
+      log_success "installing $display_name succeeded"
+    else
+      log_error "installing $display_name failed"
+      exit 1
+    fi
+  else
+    log_success "$display_name already installed"
+  fi
+}
+
 # =============================================================================
 # STEP 4: zshrc setup & local scripts directory (now with gum)
 # =============================================================================
@@ -281,15 +299,20 @@ EOF
 log_success "homebrew packages installed"
 
 # =============================================================================
-# STEP 8: wkhtmltopdf installation
+# STEP 8: Sudo-requiring installations
 # =============================================================================
 
 log "Installing wkhtmltopdf ..."
 if ! command -v wkhtmltopdf &>/dev/null; then
-  run_cmd "downloading wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
+  log "downloading wkhtmltopdf ..."
+  curl -L -o wkhtmltopdf.pkg \
     https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg
-  run_cmd "installing wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
+  log_success "downloading wkhtmltopdf succeeded"
+
+  log "installing wkhtmltopdf (sudo required) ..."
+  sudo installer -pkg wkhtmltopdf.pkg -target /
   rm wkhtmltopdf.pkg
+  log_success "installing wkhtmltopdf succeeded"
 
   if ! command -v wkhtmltopdf &>/dev/null; then
     log_error "wkhtmltopdf installation failed"
@@ -299,18 +322,19 @@ else
   log_success "wkhtmltopdf already installed"
 fi
 
+install_cask_app_sudo "/Applications/Docker.app" "docker" "Docker"
+install_cask_app_sudo "/Applications/Microsoft Teams.app" "microsoft-teams" "Microsoft Teams"
+install_cask_app_sudo "/Applications/zoom.us.app" "zoom" "Zoom"
+
 # =============================================================================
-# STEP 9: Mac apps installation
+# STEP 9: Non-sudo Mac apps installation
 # =============================================================================
 
 log "Installing mac apps ..."
 install_cask_app "/Applications/1Password.app" "1password" "1Password"
-install_cask_app "/Applications/Docker.app" "docker" "Docker"
 install_cask_app "/Applications/Google Chrome.app" "google-chrome" "Google Chrome"
 install_cask_app "/Applications/Loom.app" "loom" "Loom"
-install_cask_app "/Applications/Microsoft Teams.app" "microsoft-teams" "Microsoft Teams"
 install_cask_app "/Applications/Slack.app" "slack" "Slack"
-install_cask_app "/Applications/zoom.us.app" "zoom" "Zoom"
 
 # =============================================================================
 # STEP 10: asdf + Ruby + Node
