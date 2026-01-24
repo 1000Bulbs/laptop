@@ -54,10 +54,11 @@ update_shell() {
 
   log "Changing your shell to zsh ..."
   if ! grep "$shell_path" /etc/shells >/dev/null 2>&1; then
-    log "Adding '$shell_path' to /etc/shells"
-    sudo sh -c "echo $shell_path >> /etc/shells"
+    run_cmd "adding '$shell_path' to /etc/shells" sudo sh -c "echo $shell_path >> /etc/shells"
+    sudo chsh -s "$shell_path" "$USER"
+  else
+    log_success "already running zsh shell"
   fi
-  sudo chsh -s "$shell_path" "$USER"
 }
 
 install_asdf_plugin() {
@@ -66,15 +67,12 @@ install_asdf_plugin() {
 
   if ! asdf plugin list 2>/dev/null | grep -Fq "$name"; then
     if [ -n "$url" ]; then
-      log "Installing asdf plugin '$name' from '$url' ..."
-      asdf plugin add "$name" "$url"
+      run_cmd "installing asdf plugin '$name' from '$url'" asdf plugin add "$name" "$url"
     else
-      log "Installing asdf plugin '$name' from default source ..."
-      asdf plugin add "$name"
+      run_cmd "installing asdf plugin '$name' from default source" asdf plugin add "$name"
     fi
   else
-    log "Updating asdf plugin '$name' ..."
-    asdf plugin update "$name"
+    run_cmd "updating asdf plugin '$name'" asdf plugin update "$name"
   fi
 }
 
@@ -92,21 +90,18 @@ install_asdf_language() {
   fi
 
   if ! asdf list "$language" | grep -Fq "$version"; then
-    log "Installing $language $version ..."
-    asdf install "$language" "$version"
-
-    log "Setting default $language version to $version ..."
-    asdf set -u "$language" "$version"
+    run_cmd "installing $language $version" asdf install "$language" "$version"
+    run_cmd "setting default $language version to $version" asdf set -u "$language" "$version"
   else
-    log_success "$language $version already installed."
+    log_success "$language $version already installed"
   fi
 }
 
 gem_install_or_update() {
   if gem list "$1" --installed >/dev/null; then
-    gem update "$@"
+    run_cmd "updating $1 gem" gem update "$@"
   else
-    gem install "$@"
+    run_cmd "installing $1 gem" gem install "$@"
   fi
 }
 
@@ -114,15 +109,20 @@ trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 set -e
 
+log "Installing zshrc config ..."
 if [ ! -f "$HOME/.zshrc" ]; then
-  touch "$HOME/.zshrc"
+  run_cmd "installing zshrc config" touch "$HOME/.zshrc"
+else
+  log_success "zshrc config already exists"
 fi
 
-if [ ! -d "$HOME/.bin/" ]; then
-  mkdir "$HOME/.bin"
+log "Creating local scripts directory ..."
+if [ ! -d "$HOME/.local/scripts/" ]; then
+  run_cmd "creating local scripts directory" mkdir "$HOME/.local/scripts"
+  append_to_zshrc 'export PATH="$HOME/.local/scripts:$PATH"'
+else
+  log_success "local scripts directory already exists"
 fi
-
-append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
 
 if [ "$(uname -m)" != "arm64" ]; then
   log_error "This script only supports Apple Silicon (M series) Macs."
@@ -142,26 +142,34 @@ case "$SHELL" in
   ;;
 esac
 
+log "Installing rosetta ..."
 if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
-  run_cmd "Installing Rosetta" softwareupdate --install-rosetta --agree-to-license
+  run_cmd "installing rosetta" softwareupdate --install-rosetta --agree-to-license
+else
+  log_success "rosetta already installed"
 fi
 
+log "Installing homebrew ..."
 if ! command -v brew >/dev/null; then
-  log "Installing Homebrew ..."
-  /bin/bash -c \
+  run_cmd "installing homebrew" /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
   append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
-
   export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+else
+  log_success "homebrew is already installed"
 fi
 
+log "Uninstalling old homebrew cask"
 if brew list | grep -Fq brew-cask; then
-  run_cmd "Uninstalling old Homebrew-Cask" brew uninstall --force brew-cask
+  run_cmd "uninstalling old homebrew cask" brew uninstall --force brew-cask
+else
+  log_success "homebrew cask does not exist"
 fi
 
 brew analytics off
 
+log "Installing homebrew packages ..."
 brew bundle --file=- <<EOF
 # Unix
 brew "git"
@@ -192,18 +200,21 @@ brew "jq"
 brew "mysql-client", link: true
 brew "libpq", link: true
 EOF
+log_success "homebrew packages installed"
 
+log "Installing wkhtmltopdf ..."
 if ! command -v wkhtmltopdf &>/dev/null; then
-  log "Installing wkhtmltopdf"
-  run_cmd "Downloading wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
+  run_cmd "downloading wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
     https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg
-  run_cmd "Installing wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
+  run_cmd "installing wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
   rm wkhtmltopdf.pkg
 
   if ! command -v wkhtmltopdf &>/dev/null; then
     log_error "wkhtmltopdf installation failed"
     exit 1
   fi
+else
+  log_success "wkhtmltopdf already installed"
 fi
 
 # Mac apps
@@ -217,7 +228,8 @@ fi
 [ ! -d "/Applications/Slack.app" ] && brew install --cask slack
 [ ! -d "/Applications/zoom.us.app" ] && brew install --cask zoom
 
-asdf_zsh_setup=$(cat <<'EOF'
+asdf_zsh_setup=$(
+  cat <<'EOF'
 # add shims directory to PATH
 export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 # append completions to fpath
@@ -227,13 +239,19 @@ autoload -Uz compinit && compinit
 EOF
 )
 
+log "Installing asdf ..."
 if [ ! -d "$HOME/.asdf" ]; then
-  run_cmd "Installing asdf" brew install asdf
+  run_cmd "installing asdf" brew install asdf
   append_to_zshrc "$asdf_zsh_setup"
+else
+  log_success "asdf already installed"
 fi
 
+log "Creating asdf config ..."
 if [ ! -f "$HOME/.asdfrc" ]; then
-  echo "legacy_version_file = yes" >"$HOME/.asdfrc"
+  run_cmd "creating asdf config" echo "legacy_version_file = yes" >"$HOME/.asdfrc"
+else
+  log_success "asdf config already exists"
 fi
 
 log "Installing Ruby ..."
@@ -254,7 +272,10 @@ log "Optimizing bundler ..."
 if [ ! -f "$HOME/bundle/config" ]; then
   mkdir -p "$HOME/bundle"
   number_of_cores=$(sysctl -n hw.ncpu)
-  printf "%s\n" "---\nBUNDLE_JOBS: \"$((number_of_cores - 1))\"" > "$HOME/bundle/config"
+  printf "%s\n" "---\nBUNDLE_JOBS: \"$((number_of_cores - 1))\"" >"$HOME/bundle/config"
+  log_success "optimizing bundler succeeded"
+else
+  log_success "bundler already optimized"
 fi
 
 log "Installing Node ..."
@@ -279,7 +300,7 @@ if [ ! -f "$KEY_FILE" ]; then
   chmod 700 "$SSH_DIR"
 
   # Generate the key quietly
-  run_cmd "Generating SSH key" ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
+  run_cmd "generating SSH key" ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
 
   # Secure private keys
   find "$SSH_DIR" -type f \( -name "id_*" ! -name "*.pub" \) -exec chmod 600 {} \;
@@ -307,25 +328,25 @@ if [ ! -f "$KEY_FILE" ]; then
     printf "Do you want to upload this SSH key to GitHub now? [y/N] "
     read -r ANSWER
     case "$ANSWER" in
-      [Yy])  # Matches Y or y
-        # Check if already authenticated and has required scope
-        if ! gh auth status --hostname github.com --show-token 2>/dev/null | grep -q 'admin:public_key'; then
-          echo "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
-          gh auth login --scopes "admin:public_key" --hostname github.com
-        fi
+    [Yy]) # Matches Y or y
+      # Check if already authenticated and has required scope
+      if ! gh auth status --hostname github.com --show-token 2>/dev/null | grep -q 'admin:public_key'; then
+        echo "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
+        gh auth login --scopes "admin:public_key" --hostname github.com
+      fi
 
-        # Add SSH key
-        run_cmd "Uploading SSH key to GitHub" gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
-        ;;
+      # Add SSH key
+      run_cmd "uploading SSH key to GitHub" gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
+      ;;
     esac
   fi
 else
-  log_success "✅ SSH key already installed."
+  log_success "ssh key already installed"
 fi
 
-# Add SSH key to macOS keychain (if available)
+log "Adding ssh key to keychain ..."
 if command -v ssh-add >/dev/null; then
-  ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null || true
+  run_cmd "adding ssh key to keychain" ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null || true
 fi
 
 # macOS Defaults Configuration
