@@ -1,5 +1,5 @@
-#!/bin/sh
-# vim: set filetype=bash tabstop=2 shiftwidth=2 expandtab :
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
 # Print
 # -----------------------------------------------------------------------------
