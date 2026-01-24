@@ -60,7 +60,7 @@ export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 # =============================================================================
 
 if ! command -v gum >/dev/null; then
-  printf "\n\033[1;38;2;0;135;255m==> Installing gum...\033[0m\n"
+  printf "\n\033[1;38;2;0;135;255m==> Installing gum ...\033[0m\n"
   brew install gum
   printf "\033[1;38;2;0;255;0m✔ gum installed successfully\033[0m\n"
 else
@@ -168,7 +168,13 @@ install_cask_app() {
   local display_name="${3:-$cask_name}"
 
   if [ ! -d "$app_path" ]; then
-    run_cmd "installing $display_name" brew install --cask "$cask_name"
+    if gum spin --spinner dot --title "installing $display_name ..." -- \
+      bash -c "brew install --cask '$cask_name' >/dev/null 2>&1"; then
+      log_success "installing $display_name succeeded"
+    else
+      log_error "installing $display_name failed"
+      exit 1
+    fi
   else
     log_success "$display_name already installed"
   fi
@@ -228,7 +234,13 @@ fi
 
 log "Uninstalling old homebrew cask"
 if brew list | grep -Fq brew-cask; then
-  run_cmd "uninstalling old homebrew cask" brew uninstall --force brew-cask
+  if gum spin --spinner dot --title "uninstalling old homebrew cask ..." -- \
+    bash -c "brew uninstall --force brew-cask >/dev/null 2>&1"; then
+    log_success "uninstalling old homebrew cask succeeded"
+  else
+    log_error "uninstalling old homebrew cask failed"
+    exit 1
+  fi
 else
   log_success "homebrew cask does not exist"
 fi
@@ -317,7 +329,13 @@ EOF
 
 log "Installing asdf ..."
 if [ ! -d "$HOME/.asdf" ]; then
-  run_cmd "installing asdf" brew install asdf
+  if gum spin --spinner dot --title "installing asdf ..." -- \
+    bash -c "brew install asdf >/dev/null 2>&1"; then
+    log_success "installing asdf succeeded"
+  else
+    log_error "installing asdf failed"
+    exit 1
+  fi
   append_to_zshrc "$asdf_zsh_setup"
 else
   log_success "asdf already installed"
