@@ -149,9 +149,8 @@ case "$SHELL" in
 esac
 
 if [ "$arch" = "arm64" ]; then
-  log "Installing Rosetta ..."
   if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
-    softwareupdate --install-rosetta --agree-to-license
+    run_cmd "Install Rosetta" softwareupdate --install-rosetta --agree-to-license
   fi
 fi
 
@@ -166,8 +165,7 @@ if ! command -v brew >/dev/null; then
 fi
 
 if brew list | grep -Fq brew-cask; then
-  log "Uninstalling old Homebrew-Cask ..."
-  brew uninstall --force brew-cask
+  run_cmd "Uninstall old Homebrew-Cask" brew uninstall --force brew-cask
 fi
 
 brew analytics off
@@ -205,9 +203,9 @@ EOF
 
 if ! command -v wkhtmltopdf &>/dev/null; then
   log "Installing wkhtmltopdf"
-  run_cmd "Downloaded wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
+  run_cmd "Download wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
     https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg
-  run_cmd "Installed wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
+  run_cmd "Install wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
   rm wkhtmltopdf.pkg
 
   if ! command -v wkhtmltopdf &>/dev/null; then
@@ -238,9 +236,8 @@ autoload -Uz compinit && compinit
 EOF
 )
 
-log "Installing asdf version manager ..."
 if [ ! -d "$HOME/.asdf" ]; then
-  brew install asdf
+  run_cmd "Install asdf" brew install asdf
   append_to_zshrc "$asdf_zsh_setup"
 else
   echo "asdf already installed. Checking version ..."
@@ -269,11 +266,9 @@ else
       sed -i.bak "s|^\(.*$HOMEBREW_PREFIX/libexec/asdf.sh.*\)|# \1|" "$HOME/.zshrc"
     fi
 
-    log "Backing up old asdf directory ..."
-    mv "$HOME/.asdf" "$HOME/.asdf.bak"
+    run_cmd "Back up old asdf directory" mv "$HOME/.asdf" "$HOME/.asdf.bak"
 
-    log "Installing updated asdf version manager ..."
-    brew install asdf
+    run_cmd "Install asdf" brew install asdf
     append_to_zshrc "$asdf_zsh_setup"
 
     log_warning "Old asdf versions are no longer supported. You’ve been upgraded automatically."
@@ -329,7 +324,7 @@ if [ ! -f "$KEY_FILE" ]; then
   chmod 700 "$SSH_DIR"
 
   # Generate the key quietly
-  ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
+  run_cmd "Generate SSH key" ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
 
   # Secure private keys
   find "$SSH_DIR" -type f \( -name "id_*" ! -name "*.pub" \) -exec chmod 600 {} \;
@@ -365,8 +360,7 @@ if [ ! -f "$KEY_FILE" ]; then
         fi
 
         # Add SSH key
-        gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
-        log_success "✅  SSH key uploaded to GitHub."
+        run_cmd "Upload SSH key to GitHub" gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
         ;;
     esac
   fi
