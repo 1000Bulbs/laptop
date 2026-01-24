@@ -1,4 +1,4 @@
-name: ci
+name: test
 
 "on":
   pull_request:
@@ -31,13 +31,13 @@ jobs:
       - name: Install linting tools
         run: brew install shellcheck yamllint markdownlint-cli2
 
-      - name: shellcheck
+      - name: Lint shell scripts
         run: shellcheck mac
 
-      - name: yamllint
+      - name: Lint YAML files
         run: yamllint .
 
-      - name: markdownlint-cli2
+      - name: Lint Markdown files
         run: markdownlint-cli2 "**/*.md"
 
   test:
@@ -73,5 +73,5 @@ jobs:
             "/Applications/Rectangle.app" \
             "/Applications/Slack.app"
 
-      - name: Test
+      - name: Run mac setup script
         run: sh mac
