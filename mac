@@ -19,6 +19,18 @@ print_error() {
   printf "\033[1;31m✖ %s\033[0m\n" "$1"
 }
 
+run_cmd() {
+  local title="$1"
+  shift
+  print_step "Executing: $*"
+  if "$@"; then
+    print_success "$title"
+  else
+    print_error "$title failed"
+    exit 1
+  fi
+}
+
 # Functions
 # -----------------------------------------------------------------------------
 append_to_zshrc() {
@@ -50,30 +62,6 @@ update_shell() {
     sudo sh -c "echo $shell_path >> /etc/shells"
   fi
   sudo chsh -s "$shell_path" "$USER"
-}
-
-hack_unsupported_tap() {
-  # in the following command we might encounter .bak files that were not removed properly
-  # so we ensure the actual Formula file is the one we select
-  local formula
-  formula="$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)"
-
-  if [ -f "$formula" ]; then
-    if sed -i '' '/disable! date:/d' "$formula"; then
-      print_success "√ $1"
-    else
-      hack_unsupported_tap_failed "$1"
-    fi
-  else
-    hack_unsupported_tap_failed "$1"
-  fi
-}
-
-hack_unsupported_tap_failed() {
-  print_error "WARNING: unable to correct $1 formula"
-  print_error "Please use 'brew edit $1' to correct the formula"
-  print_error "(remove the 'disable! date:' line)"
-  exit 1
 }
 
 install_asdf_plugin() {
@@ -215,27 +203,23 @@ brew "zlib"
 brew "jq"
 
 # Databases
+brew "mysql-client", link: true
 brew "libpq", link: true
 EOF
 
-# Hack Unsupported Taps
-print_step "Hacking unsupported brew Taps "
-brew tap homebrew/cask --force
-brew tap homebrew/core --force
+if ! command -v wkhtmltopdf &>/dev/null; then
+  print_step "Installing wkhtmltopdf"
+  run_cmd "Downloaded wkhtmltopdf" curl -L -o wkhtmltopdf.pkg \
+    https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg
+  run_cmd "Installed wkhtmltopdf" sudo installer -pkg wkhtmltopdf.pkg -target /
+  rm wkhtmltopdf.pkg
 
-hack_unsupported_tap openssl@1.1
-hack_unsupported_tap mysql-client@5.7
-hack_unsupported_tap wkhtmltopdf
-
-unset -f hack_unsupported_tap
-unset -f hack_unsupported_tap_failed
-
-print_step "Installing mysql-client@5.7 ..."
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install mysql-client@5.7
-brew link --force mysql-client@5.7
-
-print_step "Installing wkhtmltopdf ..."
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install wkhtmltopdf
+  if ! command -v wkhtmltopdf &>/dev/null; then
+    print_error "wkhtmltopdf installation failed"
+    exit 1
+  fi
+  print_success "wkhtmltopdf installed"
+fi
 
 # Mac apps
 [ ! -d "/Applications/1Password.app" ] && brew install --cask 1password
