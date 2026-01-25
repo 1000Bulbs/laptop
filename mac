@@ -43,13 +43,23 @@ HOMEBREW_PREFIX="/opt/homebrew"
 # STEP 2: Install Homebrew (basic output only)
 # =============================================================================
 
+if command -v gum >/dev/null; then
+  echo ""
+  gum style --foreground "#0087ff" --bold "==> Installing homebrew ..."
+else
+  echo -e "\n\033[1;34m==> Installing homebrew ...\033[0m"
+fi
+
 if ! command -v brew >/dev/null; then
-  printf "\n\033[1;38;2;0;135;255m==> Installing Homebrew...\033[0m\n"
   bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
-  printf "\033[32m✔ Homebrew installed successfully\033[0m\n"
+  printf "\033[32m✔ homebrew installed successfully\033[0m\n"
 else
-  printf "\033[32m✔ Homebrew already installed\033[0m\n"
+  if command -v gum >/dev/null; then
+    gum style --foreground "#33BD25" "✔ homebrew already installed"
+  else
+    echo -e "\033[1;32m✔ homebrew already installed\033[0m"
+  fi
 fi
 
 # Ensure brew is in PATH for this session
@@ -59,12 +69,22 @@ export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 # STEP 3: Install gum (basic output only)
 # =============================================================================
 
+if command -v gum >/dev/null; then
+  echo ""
+  gum style --foreground "#0087ff" --bold "==> Installing gum ..."
+else
+  echo -e "\n\033[1;34m==> Installing gum ...\033[0m"
+fi
+
 if ! command -v gum >/dev/null; then
-  printf "\n\033[1;38;2;0;135;255m==> Installing gum ...\033[0m\n"
   brew install gum
   printf "\033[32m✔ gum installed successfully\033[0m\n"
 else
-  printf "\033[32m✔ gum already installed\033[0m\n"
+  if command -v gum >/dev/null; then
+    gum style --foreground "#33BD25" "✔ gum already installed"
+  else
+    echo -e "\033[1;32m✔ gum already installed\033[0m"
+  fi
 fi
 
 # =============================================================================
@@ -75,11 +95,12 @@ fi
 export CLICOLOR_FORCE=1
 
 log() {
+  echo ""
   gum style --foreground "#0087ff" --bold "==> $1"
 }
 
 log_success() {
-  gum style --foreground "#00ff00" "✔ $1"
+  gum style --foreground "#33BD25" "✔ $1"
 }
 
 log_warning() {
@@ -186,7 +207,7 @@ install_cask_app_sudo() {
   local display_name="${3:-$cask_name}"
 
   if [ ! -d "$app_path" ]; then
-    log "installing $display_name ..."
+    log "installing $display_name (sudo required) ..."
     if brew install --cask "$cask_name"; then
       log_success "installing $display_name succeeded"
     else
@@ -299,7 +320,7 @@ EOF
 log_success "homebrew packages installed"
 
 # =============================================================================
-# STEP 8: Sudo-requiring installations
+# STEP 8: wkhtmltopdf
 # =============================================================================
 
 log "Installing wkhtmltopdf ..."
@@ -322,12 +343,8 @@ else
   log_success "wkhtmltopdf already installed"
 fi
 
-install_cask_app_sudo "/Applications/Docker.app" "docker" "Docker"
-install_cask_app_sudo "/Applications/Microsoft Teams.app" "microsoft-teams" "Microsoft Teams"
-install_cask_app_sudo "/Applications/zoom.us.app" "zoom" "Zoom"
-
 # =============================================================================
-# STEP 9: Non-sudo Mac apps installation
+# STEP 9: Mac apps installation
 # =============================================================================
 
 log "Installing mac apps ..."
@@ -335,6 +352,9 @@ install_cask_app "/Applications/1Password.app" "1password" "1Password"
 install_cask_app "/Applications/Google Chrome.app" "google-chrome" "Google Chrome"
 install_cask_app "/Applications/Loom.app" "loom" "Loom"
 install_cask_app "/Applications/Slack.app" "slack" "Slack"
+install_cask_app_sudo "/Applications/Docker.app" "docker" "Docker"
+install_cask_app_sudo "/Applications/Microsoft Teams.app" "microsoft-teams" "Microsoft Teams"
+install_cask_app_sudo "/Applications/zoom.us.app" "zoom" "Zoom"
 
 # =============================================================================
 # STEP 10: asdf + Ruby + Node
@@ -623,7 +643,7 @@ done
 # =============================================================================
 
 echo
-gum style --border double --padding "1 4" --border-foreground "#00ff00" --foreground "#00ff00" --bold \
+gum style --border double --padding "1 4" --border-foreground "#33BD25" --foreground "#33BD25" --bold \
   "✔ Your laptop setup is complete!" \
   "" \
   "Some changes may require a reboot to take full effect."
