@@ -9,8 +9,8 @@ upgrades packages based on what is already installed.
 
 ## Requirements
 
-- macOS Sonoma (14.x) on Apple Silicon and Intel
-- macOS Sequoia (15.x) on Apple Silicon and Intel
+- macOS Sequoia (15.x) on Apple Silicon
+- macOS Tahoe (26.x) on Apple Silicon
 
 ## Install
 
@@ -58,19 +58,19 @@ Unix tools:
 
 - [Git] for version control
 - [OpenSSL] for Transport Layer Security (TLS)
-- [RCM] for managing company and personal dotfiles
 - [The Silver Searcher] for finding things in files
 - [Ripgrep] for searching files and directories
 - [Tmux] for saving project state and switching between projects
 - [Zsh] as your shell
+- [Zstd] for fast compression
 
 [Git]: https://git-scm.com/
 [OpenSSL]: https://www.openssl.org/
-[RCM]: https://github.com/thoughtbot/rcm
 [The Silver Searcher]: https://github.com/ggreer/the_silver_searcher
 [Ripgrep]: https://github.com/BurntSushi/ripgrep
 [Tmux]: https://tmux.github.io/
 [Zsh]: https://www.zsh.org/
+[Zstd]: https://facebook.github.io/zstd/
 
 GitHub tools:
 
@@ -113,20 +113,16 @@ Databases:
 - [1Password] for managing passwords and sensitive information
 - [Docker] for containerization
 - [Google Chrome] for web browsing
-- [iTerm2] for terminal emulation
 - [Loom] for screen recording and sharing
 - [Microsoft Teams] for office communication
-- [Rectangle] for window management
 - [Slack] for team communication
 - [Zoom] for video conferencing
 
 [1Password]: https://1password.com/
 [Docker]: https://www.docker.com/
 [Google Chrome]: https://www.google.com/chrome/
-[iTerm2]: https://iterm2.com/
 [Loom]: https://www.loom.com/
 [Microsoft Teams]: https://www.microsoft.com/en-us/microsoft-teams/
-[Rectangle]: https://rectangleapp.com/
 [Slack]: https://slack.com/
 [Zoom]: https://zoom.us/
 
