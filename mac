@@ -291,13 +291,13 @@ brew bundle --file=- <<EOF
 # Unix
 brew "git"
 brew "openssl"
-brew "rcm"
 brew "reattach-to-user-namespace"
 brew "ripgrep"
 brew "the_silver_searcher"
 brew "tmux"
 brew "wget"
 brew "zsh"
+brew "zstd"
 
 # GitHub
 brew "gh"
