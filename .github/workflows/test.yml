@@ -68,10 +68,10 @@ jobs:
           rm -Rf \
             "/Applications/1Password.app" \
             "/Applications/Docker.app" \
-            "/Applications/Google Chrome.app" \
-            "/Applications/iTerm.app" \
-            "/Applications/Rectangle.app" \
-            "/Applications/Slack.app"
+            "/Applications/Loom.app" \
+            "/Applications/Microsoft Teams.app" \
+            "/Applications/Slack.app" \
+            "/Applications/zoom.us.app"
 
       - name: Run mac setup script
         run: sh mac
