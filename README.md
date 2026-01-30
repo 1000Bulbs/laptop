@@ -112,7 +112,6 @@ Databases:
 
 - [1Password] for managing passwords and sensitive information
 - [Docker] for containerization
-- [Google Chrome] for web browsing
 - [Loom] for screen recording and sharing
 - [Microsoft Teams] for office communication
 - [Slack] for team communication
@@ -120,7 +119,6 @@ Databases:
 
 [1Password]: https://1password.com/
 [Docker]: https://www.docker.com/
-[Google Chrome]: https://www.google.com/chrome/
 [Loom]: https://www.loom.com/
 [Microsoft Teams]: https://www.microsoft.com/en-us/microsoft-teams/
 [Slack]: https://slack.com/

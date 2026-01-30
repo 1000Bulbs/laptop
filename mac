@@ -268,7 +268,37 @@ else
 fi
 
 # =============================================================================
-# STEP 7: Brew bundle (remaining packages)
+# STEP 7: Legacy dependency cleanup
+# =============================================================================
+
+# --- mysql-client@5.7 cleanup ---
+log "Checking for legacy mysql-client@5.7 ..."
+if brew list mysql-client@5.7 &>/dev/null; then
+  log_warning "Found mysql-client@5.7, removing..."
+  brew unlink mysql-client@5.7 >/dev/null 2>&1 || true
+  run_cmd "uninstalling mysql-client@5.7" brew uninstall mysql-client@5.7
+fi
+log_success "mysql-client@5.7 cleanup complete"
+
+# --- mysql2 gem cleanup (if built with mysql-client@5.7) ---
+log "Checking for mysql2 gem built with mysql-client@5.7 ..."
+mysql2_path=$(gem which mysql2 2>/dev/null || echo "")
+if [ -n "$mysql2_path" ]; then
+  ext_dir=$(dirname "$mysql2_path")
+  bundle_file=$(find "$ext_dir" -name "*.bundle" 2>/dev/null | head -1)
+  if [ -n "$bundle_file" ] && otool -L "$bundle_file" 2>/dev/null | grep -q 'mysql-client@5.7'; then
+    log_warning "Found mysql2 gem built with mysql-client@5.7, removing..."
+    gem uninstall mysql2 --all --force >/dev/null 2>&1 || true
+    log_success "mysql2 gem removed (will be rebuilt with correct mysql-client)"
+  else
+    log_success "mysql2 gem is compatible"
+  fi
+else
+  log_success "mysql2 gem not installed (will be installed by bin/setup)"
+fi
+
+# =============================================================================
+# STEP 8: Brew bundle (remaining packages)
 # =============================================================================
 
 log "Uninstalling old homebrew cask"
@@ -320,10 +350,17 @@ EOF
 log_success "homebrew packages installed"
 
 # =============================================================================
-# STEP 8: wkhtmltopdf
+# STEP 9: wkhtmltopdf
 # =============================================================================
 
 log "Installing wkhtmltopdf ..."
+
+# Uninstall homebrew version if present (we need the official pkg installer)
+if brew list wkhtmltopdf &>/dev/null; then
+  log_warning "Found homebrew version of wkhtmltopdf, removing..."
+  run_cmd "uninstalling homebrew wkhtmltopdf" brew uninstall wkhtmltopdf
+fi
+
 if ! command -v wkhtmltopdf &>/dev/null; then
   log "downloading wkhtmltopdf ..."
   curl -L -o wkhtmltopdf.pkg \
@@ -344,12 +381,11 @@ else
 fi
 
 # =============================================================================
-# STEP 9: Mac apps installation
+# STEP 10: Mac apps installation
 # =============================================================================
 
 log "Installing mac apps ..."
 install_cask_app "/Applications/1Password.app" "1password" "1Password"
-install_cask_app "/Applications/Google Chrome.app" "google-chrome" "Google Chrome"
 install_cask_app "/Applications/Loom.app" "loom" "Loom"
 install_cask_app "/Applications/Slack.app" "slack" "Slack"
 install_cask_app_sudo "/Applications/Docker.app" "docker" "Docker"
@@ -357,7 +393,7 @@ install_cask_app_sudo "/Applications/Microsoft Teams.app" "microsoft-teams" "Mic
 install_cask_app_sudo "/Applications/zoom.us.app" "zoom" "Zoom"
 
 # =============================================================================
-# STEP 10: asdf + Ruby + Node
+# STEP 11: asdf + Ruby + Node
 # =============================================================================
 
 asdf_zsh_setup=$(
@@ -371,8 +407,100 @@ autoload -Uz compinit && compinit
 EOF
 )
 
-log "Installing asdf ..."
-if [ ! -d "$HOME/.asdf" ]; then
+log "Checking asdf installation ..."
+
+# Track Ruby versions to reinstall after asdf upgrade
+reinstall_rubies=()
+
+if command -v asdf &>/dev/null; then
+  # Get current asdf version (e.g., "v0.14.0" -> "0.14.0" -> compare as 14)
+  current_version=$(asdf --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  major_minor=$(echo "$current_version" | cut -d. -f1,2 | tr -d '.')
+
+  # Version 0.16+ is required (Go binary rewrite)
+  if [ -n "$major_minor" ] && [ "$major_minor" -lt 16 ] 2>/dev/null; then
+    log_warning "Found asdf v$current_version"
+    echo
+    gum style --foreground "#ffff00" \
+      "This script requires asdf v0.16 or greater (Go-based version)." \
+      "Upgrading will uninstall all Ruby versions currently managed by asdf."
+    echo
+
+    if gum confirm "Would you like to upgrade asdf to the latest version?"; then
+      # Check if user wants to reinstall their Ruby versions
+      installed_rubies=$(asdf list ruby 2>/dev/null | tr -d ' *' | grep -v "^$" || true)
+      if [ -n "$installed_rubies" ]; then
+        echo
+        gum style --foreground "#0087ff" "Currently installed Ruby versions:"
+        echo "$installed_rubies" | while read -r v; do
+          gum style "  • $v"
+        done
+        echo
+
+        if gum confirm "Would you like to reinstall these Ruby versions after the upgrade?"; then
+          while IFS= read -r v; do
+            [ -n "$v" ] && reinstall_rubies+=("$v")
+          done <<<"$installed_rubies"
+          log_success "Will reinstall ${#reinstall_rubies[@]} Ruby version(s) after upgrade"
+        fi
+      fi
+
+      # Remove old asdf shell initialization from zshrc
+      log "Cleaning up old asdf configuration ..."
+      if [ -f "$HOME/.zshrc" ] && grep -q 'libexec/asdf.sh' "$HOME/.zshrc"; then
+        log_warning "Removing old asdf.sh initialization from ~/.zshrc"
+        sed -i '' '/libexec\/asdf\.sh/d' "$HOME/.zshrc"
+      fi
+      if [ -f "$HOME/.zshrc.local" ] && grep -q 'libexec/asdf.sh' "$HOME/.zshrc.local"; then
+        log_warning "Removing old asdf.sh initialization from ~/.zshrc.local"
+        sed -i '' '/libexec\/asdf\.sh/d' "$HOME/.zshrc.local"
+      fi
+      log_success "Old asdf configuration cleaned up"
+
+      # Uninstall old asdf
+      log "Removing old asdf installation ..."
+      rm -rf "$HOME/.asdf"
+      brew uninstall asdf 2>/dev/null || true
+      log_success "Old asdf removed"
+
+      # Install new asdf
+      if gum spin --spinner dot --title "installing asdf (Go version) ..." -- \
+        bash -c "brew install asdf >/dev/null 2>&1"; then
+        log_success "installing asdf succeeded"
+      else
+        log_error "installing asdf failed"
+        exit 1
+      fi
+      append_to_zshrc "$asdf_zsh_setup"
+
+      # Ensure asdf is available in current shell
+      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+    else
+      log_error "asdf v0.16+ is required. Please upgrade manually or re-run this script."
+      exit 1
+    fi
+  else
+    log_success "asdf v$current_version already installed (Go version)"
+  fi
+elif [ -d "$HOME/.asdf" ]; then
+  # asdf directory exists but command not found - likely broken install
+  log_warning "Found ~/.asdf directory but asdf command not available"
+  if gum confirm "Remove broken asdf installation and reinstall?"; then
+    rm -rf "$HOME/.asdf"
+    if gum spin --spinner dot --title "installing asdf ..." -- \
+      bash -c "brew install asdf >/dev/null 2>&1"; then
+      log_success "installing asdf succeeded"
+    else
+      log_error "installing asdf failed"
+      exit 1
+    fi
+    append_to_zshrc "$asdf_zsh_setup"
+  else
+    log_error "Cannot continue without a working asdf installation"
+    exit 1
+  fi
+else
+  # Fresh install
   if gum spin --spinner dot --title "installing asdf ..." -- \
     bash -c "brew install asdf >/dev/null 2>&1"; then
     log_success "installing asdf succeeded"
@@ -381,9 +509,10 @@ if [ ! -d "$HOME/.asdf" ]; then
     exit 1
   fi
   append_to_zshrc "$asdf_zsh_setup"
-else
-  log_success "asdf already installed"
 fi
+
+# Ensure asdf shims are in PATH for this session
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 
 log "Creating asdf config ..."
 if [ ! -f "$HOME/.asdfrc" ]; then
@@ -407,6 +536,39 @@ export CFLAGS=-Wno-error="implicit-function-declaration"
 install_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
 install_asdf_language "ruby" "2.6.7"
 
+# --- Reinstall previously installed Ruby versions (from asdf upgrade) ---
+if [ ${#reinstall_rubies[@]} -gt 0 ]; then
+  log "Reinstalling previously installed Ruby versions ..."
+  for ruby_version in "${reinstall_rubies[@]}"; do
+    # Skip 2.6.7 since we just installed it
+    if [ "$ruby_version" != "2.6.7" ]; then
+      if ! asdf list ruby | grep -q "$ruby_version"; then
+        run_cmd "reinstalling ruby $ruby_version" asdf install ruby "$ruby_version"
+      else
+        log_success "ruby $ruby_version already installed"
+      fi
+    fi
+  done
+  log_success "Ruby versions reinstalled"
+fi
+
+# --- Check Ruby OpenSSL compatibility ---
+log "Checking Ruby OpenSSL compatibility ..."
+if ! ruby -ropenssl -e "" 2>/dev/null; then
+  log_warning "Ruby's OpenSSL extension cannot load (likely compiled against old openssl@1.1)"
+  log_warning "Reinstalling Ruby 2.6.7..."
+  asdf uninstall ruby 2.6.7
+  run_cmd "reinstalling ruby 2.6.7" asdf install ruby 2.6.7
+  run_cmd "setting default ruby version to 2.6.7" asdf set -u ruby 2.6.7
+
+  # Verify fix worked
+  if ! ruby -ropenssl -e "" 2>/dev/null; then
+    log_error "Ruby OpenSSL extension still cannot load after reinstall"
+    exit 1
+  fi
+fi
+log_success "Ruby OpenSSL extension is working"
+
 log "Optimizing bundler ..."
 if [ ! -f "$HOME/bundle/config" ]; then
   mkdir -p "$HOME/bundle"
@@ -422,7 +584,7 @@ install_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
 
 # =============================================================================
-# STEP 11: SSH key setup (fancy prompts)
+# STEP 12: SSH key setup (fancy prompts)
 # =============================================================================
 
 log "Installing ssh key ..."
@@ -492,7 +654,7 @@ if command -v ssh-add >/dev/null; then
 fi
 
 # =============================================================================
-# STEP 12: macOS defaults
+# STEP 13: macOS defaults
 # =============================================================================
 
 # macOS Defaults Configuration
@@ -639,7 +801,7 @@ for app in "Dock" "Finder" "SystemUIServer"; do
 done
 
 # =============================================================================
-# STEP 13: Success message
+# STEP 14: Success message
 # =============================================================================
 
 echo
