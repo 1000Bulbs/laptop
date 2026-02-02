@@ -1,4 +1,4 @@
-name: asdf
+name: test
 
 "on":
   pull_request:
@@ -21,8 +21,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-14
           - macos-15
+          - macos-26
 
     steps:
       - name: Checkout code
@@ -31,13 +31,13 @@ jobs:
       - name: Install linting tools
         run: brew install shellcheck yamllint markdownlint-cli2
 
-      - name: shellcheck
+      - name: Lint shell scripts
         run: shellcheck mac
 
-      - name: yamllint
+      - name: Lint YAML files
         run: yamllint .
 
-      - name: markdownlint-cli2
+      - name: Lint Markdown files
         run: markdownlint-cli2 "**/*.md"
 
   test:
@@ -52,23 +52,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-14
           - macos-15
+          - macos-26
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install legacy ASDF v0.15.0
-        run: |
-          git clone --branch v0.15.0 https://github.com/asdf-vm/asdf.git ~/.asdf
-          echo '. "$HOME/.asdf/asdf.sh"' >> ~/.zshrc
-          echo '. "$HOME/.asdf/completions/asdf.bash"' >> ~/.zshrc
-          . "$HOME/.asdf/asdf.sh"
-          asdf plugin add act
-          asdf install act latest
-
-          echo "PATH=$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH" >> "$GITHUB_ENV"
 
       - name: Uninstall homebrew
         run: |
@@ -79,10 +68,10 @@ jobs:
           rm -Rf \
             "/Applications/1Password.app" \
             "/Applications/Docker.app" \
-            "/Applications/Google Chrome.app" \
-            "/Applications/iTerm.app" \
-            "/Applications/Rectangle.app" \
-            "/Applications/Slack.app"
+            "/Applications/Loom.app" \
+            "/Applications/Microsoft Teams.app" \
+            "/Applications/Slack.app" \
+            "/Applications/zoom.us.app"
 
-      - name: Test
+      - name: Run mac setup script
         run: sh mac

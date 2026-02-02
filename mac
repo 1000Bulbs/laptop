@@ -1,26 +1,10 @@
-#!/bin/sh
-# vim: set filetype=bash tabstop=2 shiftwidth=2 expandtab :
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-# Print
-# -----------------------------------------------------------------------------
-print_step() {
-  printf "\n\033[1;34m==> %s\033[0m\n" "$1"
-}
+# =============================================================================
+# BOOTSTRAP PHASE - Basic functions that work before gum is installed
+# =============================================================================
 
-print_success() {
-  printf "\033[1;32m✔ %s\033[0m\n" "$1"
-}
-
-print_warning() {
-  printf "\033[1;33m⚠ %s\033[0m\n" "$1"
-}
-
-print_error() {
-  printf "\033[1;31m✖ %s\033[0m\n" "$1"
-}
-
-# Functions
-# -----------------------------------------------------------------------------
 append_to_zshrc() {
   local text="$1" zshrc
   local skip_new_line="${2:-0}"
@@ -40,40 +24,119 @@ append_to_zshrc() {
   fi
 }
 
+trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
+
+set -e
+
+# =============================================================================
+# STEP 1: Validate Apple Silicon (basic output only)
+# =============================================================================
+
+if [ "$(uname -m)" != "arm64" ]; then
+  printf "\033[1;38;2;255;0;0m✖ This script only supports Apple Silicon (M series) Macs.\033[0m\n"
+  exit 1
+fi
+
+HOMEBREW_PREFIX="/opt/homebrew"
+
+# =============================================================================
+# STEP 2: Install Homebrew (basic output only)
+# =============================================================================
+
+if command -v gum >/dev/null; then
+  echo ""
+  gum style --foreground "#0087ff" --bold "==> Installing homebrew ..."
+else
+  echo -e "\n\033[1;34m==> Installing homebrew ...\033[0m"
+fi
+
+if ! command -v brew >/dev/null; then
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
+  printf "\033[32m✔ homebrew installed successfully\033[0m\n"
+else
+  if command -v gum >/dev/null; then
+    gum style --foreground "#33BD25" "✔ homebrew already installed"
+  else
+    echo -e "\033[1;32m✔ homebrew already installed\033[0m"
+  fi
+fi
+
+# Ensure brew is in PATH for this session
+export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+
+# =============================================================================
+# STEP 3: Install gum (basic output only)
+# =============================================================================
+
+if command -v gum >/dev/null; then
+  echo ""
+  gum style --foreground "#0087ff" --bold "==> Installing gum ..."
+else
+  echo -e "\n\033[1;34m==> Installing gum ...\033[0m"
+fi
+
+if ! command -v gum >/dev/null; then
+  brew install gum
+  printf "\033[32m✔ gum installed successfully\033[0m\n"
+else
+  if command -v gum >/dev/null; then
+    gum style --foreground "#33BD25" "✔ gum already installed"
+  else
+    echo -e "\033[1;32m✔ gum already installed\033[0m"
+  fi
+fi
+
+# =============================================================================
+# GUM NOW AVAILABLE - Define fancy logging functions
+# =============================================================================
+
+# Force color output for gum
+export CLICOLOR_FORCE=1
+
+log() {
+  echo ""
+  gum style --foreground "#0087ff" --bold "==> $1"
+}
+
+log_success() {
+  gum style --foreground "#33BD25" "✔ $1"
+}
+
+log_warning() {
+  gum style --foreground "#ffff00" "⚠ $1"
+}
+
+log_error() {
+  gum style --foreground "#ff0000" "✖ $1"
+}
+
+run_cmd() {
+  local title="$1"
+  shift
+  if gum spin --spinner dot --title "$title ..." -- "$@"; then
+    log_success "$title succeeded"
+  else
+    log_error "$title failed"
+    exit 1
+  fi
+}
+
+# =============================================================================
+# Helper functions (now using gum-powered logging)
+# =============================================================================
+
 update_shell() {
   local shell_path
   shell_path="$(command -v zsh)"
 
-  print_step "Changing your shell to zsh ..."
+  log "Changing your shell to zsh ..."
   if ! grep "$shell_path" /etc/shells >/dev/null 2>&1; then
-    print_step "Adding '$shell_path' to /etc/shells"
-    sudo sh -c "echo $shell_path >> /etc/shells"
-  fi
-  sudo chsh -s "$shell_path" "$USER"
-}
-
-hack_unsupported_tap() {
-  # in the following command we might encounter .bak files that were not removed properly
-  # so we ensure the actual Formula file is the one we select
-  local formula
-  formula="$(find $HOMEBREW_PREFIX/Library/Taps -name "$1.*" | sort | head -1)"
-
-  if [ -f "$formula" ]; then
-    if sed -i '' '/disable! date:/d' "$formula"; then
-      print_success "√ $1"
-    else
-      hack_unsupported_tap_failed "$1"
-    fi
+    run_cmd "adding '$shell_path' to /etc/shells" sudo sh -c "echo $shell_path >> /etc/shells"
+    sudo chsh -s "$shell_path" "$USER"
   else
-    hack_unsupported_tap_failed "$1"
+    log_success "already running zsh shell"
   fi
-}
-
-hack_unsupported_tap_failed() {
-  print_error "WARNING: unable to correct $1 formula"
-  print_error "Please use 'brew edit $1' to correct the formula"
-  print_error "(remove the 'disable! date:' line)"
-  exit 1
 }
 
 install_asdf_plugin() {
@@ -82,21 +145,18 @@ install_asdf_plugin() {
 
   if ! asdf plugin list 2>/dev/null | grep -Fq "$name"; then
     if [ -n "$url" ]; then
-      print_step "Installing asdf plugin '$name' from '$url' ..."
-      asdf plugin add "$name" "$url"
+      run_cmd "installing asdf plugin '$name' from '$url'" asdf plugin add "$name" "$url"
     else
-      print_step "Installing asdf plugin '$name' from default source ..."
-      asdf plugin add "$name"
+      run_cmd "installing asdf plugin '$name' from default source" asdf plugin add "$name"
     fi
   else
-    print_step "Updating asdf plugin '$name' ..."
-    asdf plugin update "$name"
+    run_cmd "updating asdf plugin '$name'" asdf plugin update "$name"
   fi
 }
 
 install_asdf_language() {
   if [ -z "$1" ]; then
-    print_error "Error: Missing required language argument." >&2
+    log_error "Error: Missing required language argument." >&2
     return 1
   fi
 
@@ -108,50 +168,82 @@ install_asdf_language() {
   fi
 
   if ! asdf list "$language" | grep -Fq "$version"; then
-    print_step "Installing $language $version ..."
-    asdf install "$language" "$version"
-
-    print_step "Setting default $language version to $version ..."
-    asdf set -u "$language" "$version"
+    run_cmd "installing $language $version" asdf install "$language" "$version"
+    run_cmd "setting default $language version to $version" asdf set -u "$language" "$version"
   else
-    print_success "$language $version already installed."
+    log_success "$language $version already installed"
   fi
 }
 
 gem_install_or_update() {
   if gem list "$1" --installed >/dev/null; then
-    gem update "$@"
+    run_cmd "updating $1 gem" gem update "$@"
   else
-    gem install "$@"
+    run_cmd "installing $1 gem" gem install "$@"
   fi
 }
 
-version_less_than() {
-  # Usage: version_less_than "1.2.3" "1.4.0" => true if 1.2.3 < 1.4.0
-  [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" != "$2" ]
+install_cask_app() {
+  local app_path="$1"
+  local cask_name="$2"
+  local display_name="${3:-$cask_name}"
+
+  if [ ! -d "$app_path" ]; then
+    if gum spin --spinner dot --title "installing $display_name ..." -- \
+      bash -c "brew install --cask '$cask_name' >/dev/null 2>&1"; then
+      log_success "installing $display_name succeeded"
+    else
+      log_error "installing $display_name failed"
+      exit 1
+    fi
+  else
+    log_success "$display_name already installed"
+  fi
 }
 
-trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
+install_cask_app_sudo() {
+  local app_path="$1"
+  local cask_name="$2"
+  local display_name="${3:-$cask_name}"
 
-set -e
+  if [ ! -d "$app_path" ]; then
+    log "installing $display_name (sudo required) ..."
+    if brew install --cask "$cask_name"; then
+      log_success "installing $display_name succeeded"
+    else
+      log_error "installing $display_name failed"
+      exit 1
+    fi
+  else
+    log_success "$display_name already installed"
+  fi
+}
 
+# =============================================================================
+# STEP 4: zshrc setup & local scripts directory (now with gum)
+# =============================================================================
+
+log "Installing zshrc config ..."
 if [ ! -f "$HOME/.zshrc" ]; then
-  touch "$HOME/.zshrc"
-fi
-
-if [ ! -d "$HOME/.bin/" ]; then
-  mkdir "$HOME/.bin"
-fi
-
-append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
-
-arch="$(uname -m)"
-
-if [ "$arch" = "arm64" ]; then
-  HOMEBREW_PREFIX="/opt/homebrew"
+  run_cmd "installing zshrc config" touch "$HOME/.zshrc"
 else
-  HOMEBREW_PREFIX="/usr/local"
+  log_success "zshrc config already exists"
 fi
+
+# Add homebrew to zshrc
+append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
+
+log "Creating local scripts directory ..."
+if [ ! -d "$HOME/.local/scripts/" ]; then
+  run_cmd "creating local scripts directory" mkdir -p "$HOME/.local/scripts"
+  append_to_zshrc 'export PATH="$HOME/.local/scripts:$PATH"'
+else
+  log_success "local scripts directory already exists"
+fi
+
+# =============================================================================
+# STEP 5: Shell update to homebrew's zsh
+# =============================================================================
 
 case "$SHELL" in
 */zsh)
@@ -164,41 +256,78 @@ case "$SHELL" in
   ;;
 esac
 
-if [ "$arch" = "arm64" ]; then
-  print_step "Installing Rosetta ..."
-  if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
-    softwareupdate --install-rosetta --agree-to-license
+# =============================================================================
+# STEP 6: Rosetta installation
+# =============================================================================
+
+log "Installing rosetta ..."
+if ! pkgutil --pkg-info=com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
+  run_cmd "installing rosetta" softwareupdate --install-rosetta --agree-to-license
+else
+  log_success "rosetta already installed"
+fi
+
+# =============================================================================
+# STEP 7: Legacy dependency cleanup
+# =============================================================================
+
+# --- mysql-client@5.7 cleanup ---
+log "Checking for legacy mysql-client@5.7 ..."
+if brew list mysql-client@5.7 &>/dev/null; then
+  log_warning "Found mysql-client@5.7, removing..."
+  brew unlink mysql-client@5.7 >/dev/null 2>&1 || true
+  run_cmd "uninstalling mysql-client@5.7" brew uninstall mysql-client@5.7
+fi
+log_success "mysql-client@5.7 cleanup complete"
+
+# --- mysql2 gem cleanup (if built with mysql-client@5.7) ---
+log "Checking for mysql2 gem built with mysql-client@5.7 ..."
+mysql2_path=$(gem which mysql2 2>/dev/null || echo "")
+if [ -n "$mysql2_path" ]; then
+  ext_dir=$(dirname "$mysql2_path")
+  bundle_file=$(find "$ext_dir" -name "*.bundle" 2>/dev/null | head -1)
+  if [ -n "$bundle_file" ] && otool -L "$bundle_file" 2>/dev/null | grep -q 'mysql-client@5.7'; then
+    log_warning "Found mysql2 gem built with mysql-client@5.7, removing..."
+    gem uninstall mysql2 --all --force >/dev/null 2>&1 || true
+    log_success "mysql2 gem removed (will be rebuilt with correct mysql-client)"
+  else
+    log_success "mysql2 gem is compatible"
   fi
+else
+  log_success "mysql2 gem not installed (will be installed by bin/setup)"
 fi
 
-if ! command -v brew >/dev/null; then
-  print_step "Installing Homebrew ..."
-  /bin/bash -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# =============================================================================
+# STEP 8: Brew bundle (remaining packages)
+# =============================================================================
 
-  append_to_zshrc "eval \"\$($HOMEBREW_PREFIX/bin/brew shellenv)\""
-
-  export PATH="$HOMEBREW_PREFIX/bin:$PATH"
-fi
-
+log "Uninstalling old homebrew cask"
 if brew list | grep -Fq brew-cask; then
-  print_step "Uninstalling old Homebrew-Cask ..."
-  brew uninstall --force brew-cask
+  if gum spin --spinner dot --title "uninstalling old homebrew cask ..." -- \
+    bash -c "brew uninstall --force brew-cask >/dev/null 2>&1"; then
+    log_success "uninstalling old homebrew cask succeeded"
+  else
+    log_error "uninstalling old homebrew cask failed"
+    exit 1
+  fi
+else
+  log_success "homebrew cask does not exist"
 fi
 
 brew analytics off
 
+log "Installing homebrew packages ..."
 brew bundle --file=- <<EOF
 # Unix
 brew "git"
 brew "openssl"
-brew "rcm"
 brew "reattach-to-user-namespace"
 brew "ripgrep"
 brew "the_silver_searcher"
 brew "tmux"
 brew "wget"
 brew "zsh"
+brew "zstd"
 
 # GitHub
 brew "gh"
@@ -215,40 +344,60 @@ brew "zlib"
 brew "jq"
 
 # Databases
+brew "mysql-client", link: true
 brew "libpq", link: true
 EOF
+log_success "homebrew packages installed"
 
-# Hack Unsupported Taps
-print_step "Hacking unsupported brew Taps "
-brew tap homebrew/cask --force
-brew tap homebrew/core --force
+# =============================================================================
+# STEP 9: wkhtmltopdf
+# =============================================================================
 
-hack_unsupported_tap openssl@1.1
-hack_unsupported_tap mysql-client@5.7
-hack_unsupported_tap wkhtmltopdf
+log "Installing wkhtmltopdf ..."
 
-unset -f hack_unsupported_tap
-unset -f hack_unsupported_tap_failed
+# Uninstall homebrew version if present (we need the official pkg installer)
+if brew list wkhtmltopdf &>/dev/null; then
+  log_warning "Found homebrew version of wkhtmltopdf, removing..."
+  run_cmd "uninstalling homebrew wkhtmltopdf" brew uninstall wkhtmltopdf
+fi
 
-print_step "Installing mysql-client@5.7 ..."
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install mysql-client@5.7
-brew link --force mysql-client@5.7
+if ! command -v wkhtmltopdf &>/dev/null; then
+  log "downloading wkhtmltopdf ..."
+  curl -L -o wkhtmltopdf.pkg \
+    https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg
+  log_success "downloading wkhtmltopdf succeeded"
 
-print_step "Installing wkhtmltopdf ..."
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install wkhtmltopdf
+  log "installing wkhtmltopdf (sudo required) ..."
+  sudo installer -pkg wkhtmltopdf.pkg -target /
+  rm wkhtmltopdf.pkg
+  log_success "installing wkhtmltopdf succeeded"
 
-# Mac apps
-[ ! -d "/Applications/1Password.app" ] && brew install --cask 1password
-[ ! -d "/Applications/Docker.app" ] && brew install --cask docker
-[ ! -d "/Applications/Google Chrome.app" ] && brew install --cask google-chrome
-[ ! -d "/Applications/iTerm.app" ] && brew install --cask iterm2
-[ ! -d "/Applications/Loom.app" ] && brew install --cask loom
-[ ! -d "/Applications/Microsoft Teams.app" ] && brew install --cask microsoft-teams
-[ ! -d "/Applications/Rectangle.app" ] && brew install --cask rectangle
-[ ! -d "/Applications/Slack.app" ] && brew install --cask slack
-[ ! -d "/Applications/zoom.us.app" ] && brew install --cask zoom
+  if ! command -v wkhtmltopdf &>/dev/null; then
+    log_error "wkhtmltopdf installation failed"
+    exit 1
+  fi
+else
+  log_success "wkhtmltopdf already installed"
+fi
 
-asdf_zsh_setup=$(cat <<'EOF'
+# =============================================================================
+# STEP 10: Mac apps installation
+# =============================================================================
+
+log "Installing mac apps ..."
+install_cask_app "/Applications/1Password.app" "1password" "1Password"
+install_cask_app "/Applications/Loom.app" "loom" "Loom"
+install_cask_app "/Applications/Slack.app" "slack" "Slack"
+install_cask_app_sudo "/Applications/Docker.app" "docker" "Docker"
+install_cask_app_sudo "/Applications/Microsoft Teams.app" "microsoft-teams" "Microsoft Teams"
+install_cask_app_sudo "/Applications/zoom.us.app" "zoom" "Zoom"
+
+# =============================================================================
+# STEP 11: asdf + Ruby + Node
+# =============================================================================
+
+asdf_zsh_setup=$(
+  cat <<'EOF'
 # add shims directory to PATH
 export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 # append completions to fpath
@@ -258,55 +407,122 @@ autoload -Uz compinit && compinit
 EOF
 )
 
-print_step "Installing asdf version manager ..."
-if [ ! -d "$HOME/.asdf" ]; then
-  brew install asdf
-  append_to_zshrc "$asdf_zsh_setup"
-else
-  echo "asdf already installed. Checking version ..."
+log "Checking asdf installation ..."
 
-  if [ "$(command -v asdf)" != "$HOMEBREW_PREFIX/bin/asdf" ]; then
-    # legacy version, source it before using
-    if [ -f "$HOME/.asdf/asdf.sh" ]; then
-      . "$HOME/.asdf/asdf.sh"
+# Track Ruby versions to reinstall after asdf upgrade
+reinstall_rubies=()
+
+if command -v asdf &>/dev/null; then
+  # Get current asdf version (e.g., "v0.14.0" -> "0.14.0" -> compare as 14)
+  current_version=$(asdf --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  major_minor=$(echo "$current_version" | cut -d. -f1,2 | tr -d '.')
+
+  # Version 0.16+ is required (Go binary rewrite)
+  if [ -n "$major_minor" ] && [ "$major_minor" -lt 16 ] 2>/dev/null; then
+    log_warning "Found asdf v$current_version"
+    echo
+    gum style --foreground "#ffff00" \
+      "This script requires asdf v0.16 or greater (Go-based version)." \
+      "Upgrading will uninstall all Ruby versions currently managed by asdf."
+    echo
+
+    if gum confirm "Would you like to upgrade asdf to the latest version?"; then
+      # Check if user wants to reinstall their Ruby versions
+      installed_rubies=$(asdf list ruby 2>/dev/null | tr -d ' *' | grep -v "^$" || true)
+      if [ -n "$installed_rubies" ]; then
+        echo
+        gum style --foreground "#0087ff" "Currently installed Ruby versions:"
+        echo "$installed_rubies" | while read -r v; do
+          gum style "  • $v"
+        done
+        echo
+
+        if gum confirm "Would you like to reinstall these Ruby versions after the upgrade?"; then
+          while IFS= read -r v; do
+            [ -n "$v" ] && reinstall_rubies+=("$v")
+          done <<<"$installed_rubies"
+          log_success "Will reinstall ${#reinstall_rubies[@]} Ruby version(s) after upgrade"
+        fi
+      fi
+
+      # Remove old asdf shell initialization from zshrc
+      log "Cleaning up old asdf configuration ..."
+      if [ -f "$HOME/.zshrc" ] && grep -q 'libexec/asdf.sh' "$HOME/.zshrc"; then
+        log_warning "Removing old asdf.sh initialization from ~/.zshrc"
+        sed -i '' '/libexec\/asdf\.sh/d' "$HOME/.zshrc"
+      fi
+      if [ -f "$HOME/.zshrc.local" ] && grep -q 'libexec/asdf.sh' "$HOME/.zshrc.local"; then
+        log_warning "Removing old asdf.sh initialization from ~/.zshrc.local"
+        sed -i '' '/libexec\/asdf\.sh/d' "$HOME/.zshrc.local"
+      fi
+      log_success "Old asdf configuration cleaned up"
+
+      # Uninstall old asdf
+      log "Removing old asdf installation ..."
+      rm -rf "$HOME/.asdf"
+      brew uninstall asdf 2>/dev/null || true
+      log_success "Old asdf removed"
+
+      # Install new asdf
+      if gum spin --spinner dot --title "installing asdf (Go version) ..." -- \
+        bash -c "brew install asdf >/dev/null 2>&1"; then
+        log_success "installing asdf succeeded"
+      else
+        log_error "installing asdf failed"
+        exit 1
+      fi
+      append_to_zshrc "$asdf_zsh_setup"
+
+      # Ensure asdf is available in current shell
+      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
     else
-      print_error "Legacy asdf installation detected but asdf.sh not found!"
+      log_error "asdf v0.16+ is required. Please upgrade manually or re-run this script."
       exit 1
     fi
-  fi
-
-  current_asdf_version="$(asdf version)"
-  normalized_version="$(echo "$current_asdf_version" | sed -E 's/^v//; s/-.*$//')"
-
-  if [ -z "$current_asdf_version" ]; then
-    print_warning "Unable to detect current asdf version. Skipping upgrade check."
-  elif version_less_than "$normalized_version" "0.16.0"; then
-    print_warning "asdf version $current_asdf_version is older than 0.16.0."
-    print_step "Upgrading to new Go-based asdf version (>= 0.16.0) automatically ..."
-
-    print_step "Commenting out legacy source line in .zshrc ..."
-    if grep -q "$HOMEBREW_PREFIX/libexec/asdf.sh" "$HOME/.zshrc"; then
-      sed -i.bak "s|^\(.*$HOMEBREW_PREFIX/libexec/asdf.sh.*\)|# \1|" "$HOME/.zshrc"
-    fi
-
-    print_step "Backing up old asdf directory ..."
-    mv "$HOME/.asdf" "$HOME/.asdf.bak"
-
-    print_step "Installing updated asdf version manager ..."
-    brew install asdf
-    append_to_zshrc "$asdf_zsh_setup"
-
-    print_warning "Old asdf versions are no longer supported. You’ve been upgraded automatically."
   else
-    print_success "asdf version $current_asdf_version is up to date."
+    log_success "asdf v$current_version already installed (Go version)"
   fi
+elif [ -d "$HOME/.asdf" ]; then
+  # asdf directory exists but command not found - likely broken install
+  log_warning "Found ~/.asdf directory but asdf command not available"
+  if gum confirm "Remove broken asdf installation and reinstall?"; then
+    rm -rf "$HOME/.asdf"
+    if gum spin --spinner dot --title "installing asdf ..." -- \
+      bash -c "brew install asdf >/dev/null 2>&1"; then
+      log_success "installing asdf succeeded"
+    else
+      log_error "installing asdf failed"
+      exit 1
+    fi
+    append_to_zshrc "$asdf_zsh_setup"
+  else
+    log_error "Cannot continue without a working asdf installation"
+    exit 1
+  fi
+else
+  # Fresh install
+  if gum spin --spinner dot --title "installing asdf ..." -- \
+    bash -c "brew install asdf >/dev/null 2>&1"; then
+    log_success "installing asdf succeeded"
+  else
+    log_error "installing asdf failed"
+    exit 1
+  fi
+  append_to_zshrc "$asdf_zsh_setup"
 fi
 
+# Ensure asdf shims are in PATH for this session
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+
+log "Creating asdf config ..."
 if [ ! -f "$HOME/.asdfrc" ]; then
   echo "legacy_version_file = yes" >"$HOME/.asdfrc"
+  log_success "asdf config created"
+else
+  log_success "asdf config already exists"
 fi
 
-print_step "Installing Ruby ..."
+log "Installing Ruby ..."
 append_to_zshrc '# Fix for installing older versions of Ruby'
 append_to_zshrc 'export DLDFLAGS="-Wl,-undefined,dynamic_lookup"' 1
 append_to_zshrc 'export OPENSSL_CFLAGS="-Wno-error=implicit-function-declaration"' 1
@@ -320,36 +536,75 @@ export CFLAGS=-Wno-error="implicit-function-declaration"
 install_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
 install_asdf_language "ruby" "2.6.7"
 
-print_step "Optimizing bundler ..."
+# --- Reinstall previously installed Ruby versions (from asdf upgrade) ---
+if [ ${#reinstall_rubies[@]} -gt 0 ]; then
+  log "Reinstalling previously installed Ruby versions ..."
+  for ruby_version in "${reinstall_rubies[@]}"; do
+    # Skip 2.6.7 since we just installed it
+    if [ "$ruby_version" != "2.6.7" ]; then
+      if ! asdf list ruby | grep -q "$ruby_version"; then
+        run_cmd "reinstalling ruby $ruby_version" asdf install ruby "$ruby_version"
+      else
+        log_success "ruby $ruby_version already installed"
+      fi
+    fi
+  done
+  log_success "Ruby versions reinstalled"
+fi
+
+# --- Check Ruby OpenSSL compatibility ---
+log "Checking Ruby OpenSSL compatibility ..."
+if ! ruby -ropenssl -e "" 2>/dev/null; then
+  log_warning "Ruby's OpenSSL extension cannot load (likely compiled against old openssl@1.1)"
+  log_warning "Reinstalling Ruby 2.6.7..."
+  asdf uninstall ruby 2.6.7
+  run_cmd "reinstalling ruby 2.6.7" asdf install ruby 2.6.7
+  run_cmd "setting default ruby version to 2.6.7" asdf set -u ruby 2.6.7
+
+  # Verify fix worked
+  if ! ruby -ropenssl -e "" 2>/dev/null; then
+    log_error "Ruby OpenSSL extension still cannot load after reinstall"
+    exit 1
+  fi
+fi
+log_success "Ruby OpenSSL extension is working"
+
+log "Optimizing bundler ..."
 if [ ! -f "$HOME/bundle/config" ]; then
   mkdir -p "$HOME/bundle"
   number_of_cores=$(sysctl -n hw.ncpu)
-  printf "%s\n" "---\nBUNDLE_JOBS: \"$((number_of_cores - 1))\"" > "$HOME/bundle/config"
+  printf "%s\n" "---\nBUNDLE_JOBS: \"$((number_of_cores - 1))\"" >"$HOME/bundle/config"
+  log_success "optimizing bundler succeeded"
+else
+  log_success "bundler already optimized"
 fi
 
-print_step "Installing Node ..."
+log "Installing Node ..."
 install_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
 install_asdf_language "nodejs"
 
-print_step "Installing ssh key ..."
+# =============================================================================
+# STEP 12: SSH key setup (fancy prompts)
+# =============================================================================
+
+log "Installing ssh key ..."
 SSH_DIR="$HOME/.ssh"
 KEY_FILE="$SSH_DIR/id_ed25519.pub"
 PRIVATE_KEY="$SSH_DIR/id_ed25519"
 
 if [ ! -f "$KEY_FILE" ]; then
-  print_warning "No SSH key found. Let's create one."
+  log_warning "No SSH key found. Let's create one."
 
   # Prompt for email until user enters something non-empty
   while [ -z "${EMAIL:-}" ]; do
-    printf "Enter your @1000bulbs.com email to generate your SSH key: "
-    read -r EMAIL
+    EMAIL=$(gum input --placeholder "you@1000bulbs.com" --header "Enter your email for SSH key:")
   done
 
   mkdir -p "$SSH_DIR"
   chmod 700 "$SSH_DIR"
 
   # Generate the key quietly
-  ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
+  run_cmd "generating SSH key" ssh-keygen -q -t ed25519 -C "$EMAIL" -f "$PRIVATE_KEY" -N ""
 
   # Secure private keys
   find "$SSH_DIR" -type f \( -name "id_*" ! -name "*.pub" \) -exec chmod 600 {} \;
@@ -362,42 +617,45 @@ if [ ! -f "$KEY_FILE" ]; then
     chown -R "$USER" "$SSH_DIR"
   fi
 
-  print_success "✅ SSH key created successfully!"
-  echo "📍 Public key path: $KEY_FILE"
+  log_success "SSH key created successfully!"
   echo
-  echo "🔑 Here is your public key:"
-  echo "------------------------------------------------------------"
-  cat "$KEY_FILE"
-  echo "------------------------------------------------------------"
+  gum style --border rounded --padding "1 2" --border-foreground "#0087ff" \
+    "📍 Public key path: $KEY_FILE"
+  echo
+  gum style --foreground "#0087ff" --bold "🔑 Your public key:"
+  gum style --border rounded --padding "1 2" "$(cat "$KEY_FILE")"
 
   # Upload key to GitHub if gh CLI is installed and not in CI
   if [ -z "$CI" ] && command -v gh >/dev/null; then
     echo
-    echo "👉 Now that you've seen your key, we can upload it to GitHub for you."
-    printf "Do you want to upload this SSH key to GitHub now? [y/N] "
-    read -r ANSWER
-    case "$ANSWER" in
-      [Yy])  # Matches Y or y
-        # Check if already authenticated and has required scope
-        if ! gh auth status --hostname github.com --show-token 2>/dev/null | grep -q 'admin:public_key'; then
-          echo "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
-          gh auth login --scopes "admin:public_key" --hostname github.com
-        fi
+    gum style --foreground "#0087ff" "👉 Now that you've seen your key, we can upload it to GitHub for you."
+    if gum confirm "Upload this SSH key to GitHub now?"; then
+      # Check if already authenticated and has required scope
+      if ! gh auth status --hostname github.com --show-token 2>/dev/null | grep -q 'admin:public_key'; then
+        gum style --foreground "#0087ff" "🔐 Authenticating with GitHub (requesting admin:public_key scope)..."
+        gh auth login --scopes "admin:public_key" --hostname github.com
+      fi
 
-        # Add SSH key
-        gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
-        print_success "✅  SSH key uploaded to GitHub."
-        ;;
-    esac
+      # Add SSH key
+      run_cmd "uploading SSH key to GitHub" gh ssh-key add "$KEY_FILE" --title "$(hostname) - $(date +%Y-%m-%d)"
+    fi
   fi
 else
-  print_success "✅ SSH key already installed."
+  log_success "ssh key already installed"
 fi
 
-# Add SSH key to macOS keychain (if available)
+log "Adding ssh key to keychain ..."
 if command -v ssh-add >/dev/null; then
-  ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null || true
+  if ssh-add --apple-use-keychain "$PRIVATE_KEY" 2>/dev/null; then
+    log_success "ssh key added to keychain"
+  else
+    log_warning "could not add ssh key to keychain (non-fatal)"
+  fi
 fi
+
+# =============================================================================
+# STEP 13: macOS defaults
+# =============================================================================
 
 # macOS Defaults Configuration
 # This script customizes system behavior for a smoother and faster user experience.
@@ -448,7 +706,7 @@ defaults write -g NSTableViewDefaultSizeMode -int 3
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
 
-# Don’t show the "open dialog" when launching document-based apps
+# Don't show the "open dialog" when launching document-based apps
 # Revert: add the following line to ~/.laptop.local
 #   defaults write -g NSShowAppCentricOpenPanelInsteadOfUntitledFile -bool true
 defaults write -g NSShowAppCentricOpenPanelInsteadOfUntitledFile -bool false
@@ -533,7 +791,7 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 defaults write com.apple.screencapture type -string "png"
 
 if [ -f "$HOME/.laptop.local" ]; then
-  print_step "Running your customizations from ~/.laptop.local ..."
+  log "Running your customizations from ~/.laptop.local ..."
   . "$HOME/.laptop.local"
 fi
 
@@ -542,4 +800,12 @@ for app in "Dock" "Finder" "SystemUIServer"; do
   killall "$app" >/dev/null 2>&1 || true
 done
 
-print_success "Your laptop setup is complete! (Some changes may require a reboot to take full effect.)"
+# =============================================================================
+# STEP 14: Success message
+# =============================================================================
+
+echo
+gum style --border double --padding "1 4" --border-foreground "#33BD25" --foreground "#33BD25" --bold \
+  "✔ Your laptop setup is complete!" \
+  "" \
+  "Some changes may require a reboot to take full effect."
