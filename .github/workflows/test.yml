@@ -75,3 +75,15 @@ jobs:
 
       - name: Run mac setup script
         run: sh mac
+
+      - name: Verify Ruby 2.6.7 is installed with RubyGems 3.2.3
+        run: |
+          export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+          ASDF_RUBY_VERSION=2.6.7 ruby --version | grep "2.6.7"
+          ASDF_RUBY_VERSION=2.6.7 gem --version | grep "3.2.3"
+
+      - name: Verify Ruby 2.7.8 is global with RubyGems 3.2.3
+        run: |
+          export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+          ruby --version | grep "2.7.8"
+          gem --version | grep "3.2.3"
