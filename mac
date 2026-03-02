@@ -535,13 +535,15 @@ export CFLAGS=-Wno-error="implicit-function-declaration"
 
 install_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
 install_asdf_language "ruby" "2.6.7"
+install_asdf_language "ruby" "2.7.8"
+run_cmd "setting default ruby version to 2.7.8" asdf set -u ruby 2.7.8
 
 # --- Reinstall previously installed Ruby versions (from asdf upgrade) ---
 if [ ${#reinstall_rubies[@]} -gt 0 ]; then
   log "Reinstalling previously installed Ruby versions ..."
   for ruby_version in "${reinstall_rubies[@]}"; do
     # Skip 2.6.7 since we just installed it
-    if [ "$ruby_version" != "2.6.7" ]; then
+    if [ "$ruby_version" != "2.6.7" ] && [ "$ruby_version" != "2.7.8" ]; then
       if ! asdf list ruby | grep -q "$ruby_version"; then
         run_cmd "reinstalling ruby $ruby_version" asdf install ruby "$ruby_version"
       else
@@ -554,20 +556,40 @@ fi
 
 # --- Check Ruby OpenSSL compatibility ---
 log "Checking Ruby OpenSSL compatibility ..."
-if ! ruby -ropenssl -e "" 2>/dev/null; then
-  log_warning "Ruby's OpenSSL extension cannot load (likely compiled against old openssl@1.1)"
-  log_warning "Reinstalling Ruby 2.6.7..."
-  asdf uninstall ruby 2.6.7
-  run_cmd "reinstalling ruby 2.6.7" asdf install ruby 2.6.7
-  run_cmd "setting default ruby version to 2.6.7" asdf set -u ruby 2.6.7
 
-  # Verify fix worked
+# Check Ruby 2.7.8 (global)
+if ! ruby -ropenssl -e "" 2>/dev/null; then
+  log_warning "Ruby 2.7.8 OpenSSL extension cannot load (likely compiled against old openssl@1.1)"
+  log_warning "Reinstalling Ruby 2.7.8..."
+  asdf uninstall ruby 2.7.8
+  run_cmd "reinstalling ruby 2.7.8" asdf install ruby 2.7.8
+  run_cmd "setting default ruby version to 2.7.8" asdf set -u ruby 2.7.8
+
   if ! ruby -ropenssl -e "" 2>/dev/null; then
-    log_error "Ruby OpenSSL extension still cannot load after reinstall"
+    log_error "Ruby 2.7.8 OpenSSL extension still cannot load after reinstall"
     exit 1
   fi
 fi
-log_success "Ruby OpenSSL extension is working"
+log_success "Ruby 2.7.8 OpenSSL extension is working"
+
+# Check Ruby 2.6.7
+if ! ASDF_RUBY_VERSION=2.6.7 ruby -ropenssl -e "" 2>/dev/null; then
+  log_warning "Ruby 2.6.7 OpenSSL extension cannot load (likely compiled against old openssl@1.1)"
+  log_warning "Reinstalling Ruby 2.6.7..."
+  asdf uninstall ruby 2.6.7
+  run_cmd "reinstalling ruby 2.6.7" asdf install ruby 2.6.7
+
+  if ! ASDF_RUBY_VERSION=2.6.7 ruby -ropenssl -e "" 2>/dev/null; then
+    log_error "Ruby 2.6.7 OpenSSL extension still cannot load after reinstall"
+    exit 1
+  fi
+fi
+log_success "Ruby 2.6.7 OpenSSL extension is working"
+
+log "Installing RubyGems 3.2.3 ..."
+run_cmd "updating rubygems to 3.2.3 for ruby 2.7.8" gem update --system 3.2.3
+run_cmd "updating rubygems to 3.2.3 for ruby 2.6.7" ASDF_RUBY_VERSION=2.6.7 gem update --system 3.2.3
+log_success "RubyGems 3.2.3 installed on both Ruby versions"
 
 log "Optimizing bundler ..."
 if [ ! -f "$HOME/bundle/config" ]; then
